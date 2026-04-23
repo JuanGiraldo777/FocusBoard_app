@@ -1,0 +1,8 @@
+# Normalizar saltos de línea a LF en todos los archivos de texto
+* text=auto eol=lf
+
+# Archivos binarios — no tocar
+*.png binary
+*.jpg binary
+*.ico binary
+*.svg binary

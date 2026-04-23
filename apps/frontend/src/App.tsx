@@ -1,0 +1,19 @@
+import { Routes, Route, Navigate } from 'react-router-dom'
+import Login from './pages/Login'
+import Dashboard from './pages/Dashboard'
+import Room from './pages/Room'
+import History from './pages/History'
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/room/:code" element={<Room />} />
+      <Route path="/history" element={<History />} />
+    </Routes>
+  )
+}
+
+export default App

@@ -1,0 +1,33 @@
+# ─── Variables de entorno ────────────────────────────────
+# NUNCA subir estos archivos a Git
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+.env.*.local
+
+# ─── Dependencias ────────────────────────────────────────
+node_modules/
+
+# ─── Builds y compilados ─────────────────────────────────
+dist/
+build/
+.turbo/
+*.tsbuildinfo
+
+# ─── Logs ────────────────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+
+# ─── Sistema operativo ───────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── Editor ──────────────────────────────────────────────
+.vscode/settings.json
+.idea/
+
+# ─── Testing ─────────────────────────────────────────────
+coverage/
