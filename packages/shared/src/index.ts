@@ -1,21 +1,21 @@
 // ─── Usuario ────────────────────────────────────────────
 export interface User {
-  id: string
-  name: string
+  id: number
   email: string
+  fullName: string | null
   avatarUrl: string | null
+  isActive: boolean
   createdAt: string
 }
 
 // ─── Sala ───────────────────────────────────────────────
 export interface Room {
-  id: string
+  id: number
+  ownerId: number
   name: string
-  code: string
-  isPublic: boolean
-  ownerId: string
-  maxMembers: number
-  memberCount: number
+  description: string | null
+  isPrivate: boolean
+  inviteCode: string | null
   createdAt: string
 }
 
@@ -23,11 +23,11 @@ export interface Room {
 export type SessionStatus = 'completed' | 'cancelled' | 'interrupted'
 
 export interface PomodoroSession {
-  id: string
-  userId: string
-  roomId: string | null
-  taskLabel: string
-  durationMinutes: number
+  id: number
+  userId: number
+  roomId: number | null
+  taskLabel: string | null
+  durationSeconds: number
   status: SessionStatus
   startedAt: string
   endedAt: string | null
@@ -37,10 +37,21 @@ export interface PomodoroSession {
 export type UserStatus = 'focusing' | 'break' | 'idle'
 
 export interface RoomMember {
-  userId: string
-  name: string
-  avatarUrl: string | null
-  status: UserStatus
+  roomId: number
+  userId: number
+  role: 'owner' | 'admin' | 'member'
+  joinedAt: string
+}
+
+// ─── Configuracion de usuario ───────────────────────────
+export interface UserSettings {
+  userId: number
+  focusDurationMin: number
+  shortBreakMin: number
+  longBreakMin: number
+  dailyGoal: number
+  soundEnabled: boolean
+  theme: string
 }
 
 // ─── Respuestas de la API ────────────────────────────────
