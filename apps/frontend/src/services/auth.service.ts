@@ -68,3 +68,45 @@ export async function registerUser(
   return response.json();
 }
 
+/**
+ * Inicia sesión de un usuario
+ * - Las cookies HttpOnly se setean automáticamente por el backend
+ * - El frontend NO toca los tokens
+ * - credentials: 'include' envía las cookies en cada request
+ */
+export async function loginUser(
+  email: string,
+  password: string,
+): Promise<ApiSuccess<AuthTokens>> {
+  const response = await fetch(`${env.apiUrl}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include", // Envía cookies automáticamente
+    body: JSON.stringify({ email, password }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+
+    if (response.status === 401) {
+      throw createAppError("Email o contraseña incorrectos", 401);
+    }
+
+    if (response.status === 429) {
+      throw createAppError(
+        "Demasiados intentos. Intenta en 15 minutos",
+        429,
+      );
+    }
+
+    if (response.status === 403) {
+      throw createAppError("Cuenta desactivada", 403);
+    }
+
+    throw new Error(
+      errorData.error || `Error ${response.status}: ${response.statusText}`,
+    );
+  }
+
+  return response.json();
+}
