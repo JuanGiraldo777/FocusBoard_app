@@ -125,16 +125,10 @@ export const authService = {
       const decoded = jwt.verify(
         refreshToken,
         env.REFRESH_TOKEN_SECRET,
-      ) as { sub: number; jti: string };
+      ) as { sub: number; jti?: string };
 
       const userId = decoded.sub;
       const jti = decoded.jti;
-
-      if (!jti) {
-        const error = new Error("Token inválido");
-        (error as any).statusCode = 401;
-        throw error;
-      }
 
       // 2. Buscar usuario
       const user = await userRepository.findById(userId);
@@ -144,13 +138,16 @@ export const authService = {
         throw error;
       }
 
-      // 3. Verificar si el token está revocado
-      const isRevoked = await userRepository.isRefreshTokenRevoked(jti);
-      if (isRevoked) {
-        const error = new Error("Refresh token revocado o expirado");
-        (error as any).statusCode = 401;
-        throw error;
+      // 3. Verificar revocación solo si el token tiene jti
+      if (jti) {
+        const isRevoked = await userRepository.isRefreshTokenRevoked(jti);
+        if (isRevoked) {
+          const error = new Error("Refresh token revocado o expirado");
+          (error as any).statusCode = 401;
+          throw error;
+        }
       }
+      // Si no tiene jti, es un token antiguo - permitir por retrocompatibilidad
 
       // 4. Generar nuevo access token
       const newAccessToken = jwt.sign(
