@@ -1,12 +1,9 @@
-import React, { createContext, useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import type { AuthContextType } from "../types/auth.ts";
 import type { User } from "@focusboard/shared";
+import { AuthContext } from "./auth.context.ts";
 import { apiCall } from "../utils/api.ts";
 import { loginUser, registerUser } from "../services/auth.service.ts";
-
-export const AuthContext = createContext<AuthContextType | undefined>(
-  undefined,
-);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
