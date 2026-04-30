@@ -7,7 +7,7 @@ declare global {
   namespace Express {
     interface Request {
       user?: {
-        userId: number;
+        id: number;
         email: string;
       };
     }
@@ -28,14 +28,20 @@ export const verifyAccessToken = (
       return next(error);
     }
 
-    const decoded = jwt.verify(token, env.ACCESS_TOKEN_SECRET) as {
-      sub: number;
-      email: string;
-    };
+    const decoded = jwt.verify(token, env.ACCESS_TOKEN_SECRET) as Record<
+      string,
+      any
+    >;
+
+    if (typeof decoded === "string" || !decoded.sub || !decoded.email) {
+      const error = new Error("Token inválido");
+      (error as any).statusCode = 401;
+      return next(error);
+    }
 
     req.user = {
-      userId: decoded.sub,
-      email: decoded.email,
+      id: decoded.sub as number,
+      email: decoded.email as string,
     };
 
     next();

@@ -100,4 +100,37 @@ export const userRepository = {
     );
     return result.rows[0] ?? null;
   },
+
+  // Verificar si un refresh token está revocado (por jti)
+  isRefreshTokenRevoked: async (jti: string): Promise<boolean> => {
+    const result = await db.query(
+      "SELECT revoked_at FROM refresh_tokens WHERE token_jti = $1 LIMIT 1",
+      [jti],
+    );
+    return result.rows.length === 0 || result.rows[0].revoked_at !== null;
+  },
+
+  // Revocar un refresh token (por jti)
+  revokeRefreshToken: async (jti: string): Promise<void> => {
+    await db.query(
+      "UPDATE refresh_tokens SET revoked_at = NOW() WHERE token_jti = $1",
+      [jti],
+    );
+  },
+
+  // Guardar refresh token con jti para revocación
+  saveRefreshTokenWithJti: async (
+    userId: number,
+    tokenHash: string,
+    jti: string,
+    expiresAt: Date,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<void> => {
+    await db.query(
+      `INSERT INTO refresh_tokens (user_id, token_hash, token_jti, expires_at, ip_address, user_agent)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [userId, tokenHash, jti, expiresAt, ipAddress || null, userAgent || null],
+    );
+  },
 };

@@ -45,13 +45,13 @@ export const connectDB = async (): Promise<void> => {
     process.exit(1)
   }
 
- // Cierre limpio del pool al apagar el servidor
-const shutdown = async () => {
-  await pool.end()
-  console.log('Pool de PostgreSQL cerrado correctamente')
-  process.exit(0)
-}
+  // Cierre limpio del pool al apagar el servidor
+  const shutdown = async () => {
+    await pool.end()
+    console.log('Pool de PostgreSQL cerrado correctamente')
+    process.exit(0)
+  }
 
-process.on('SIGTERM', shutdown)
-process.on('SIGINT', shutdown)
+  process.on('SIGTERM', shutdown)
+  process.on('SIGINT', shutdown)
 }

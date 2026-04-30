@@ -1,13 +1,17 @@
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth.ts";
 
 export function Dashboard() {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
-  const handleLogout = () => {
-    // Limpiar cookies y redirigir a login
-    document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-    document.cookie = "refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-    navigate("/login", { replace: true });
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/login", { replace: true });
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
 
   return (
@@ -27,10 +31,11 @@ export function Dashboard() {
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="bg-white rounded-lg shadow-md p-8 text-center">
           <h2 className="text-3xl font-bold text-gray-800 mb-4">
-            ¡Bienvenido a FocusBoard!
+            ¡Bienvenido {user?.fullName || "a FocusBoard"}!
           </h2>
           <p className="text-gray-600 mb-6">
-            Sesión iniciada correctamente. Este es tu dashboard.
+            Sesión iniciada como:{" "}
+            <span className="font-semibold">{user?.email}</span>
           </p>
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-blue-50 p-4 rounded-lg">

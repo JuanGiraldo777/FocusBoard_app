@@ -1,9 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { useRegisterForm } from "../hooks/useRegisterForm";
-import { registerUser } from "../services/auth.service";
+import { useAuth } from "../hooks/useAuth.ts";
 
 export function RegisterForm() {
   const navigate = useNavigate();
+  const { register } = useAuth();
   const {
     formData,
     errors,
@@ -25,14 +26,13 @@ export function RegisterForm() {
 
     setIsLoading(true);
     try {
-      await registerUser({
-        email: formData.email,
-        password: formData.password,
-        fullName: formData.fullName,
-      });
+      await register(
+        formData.email,
+        formData.password,
+        formData.fullName,
+      );
 
-      // ✅ Éxito - Las cookies HttpOnly ya están en el navegador
-      // El backend las seteo automáticamente
+      // ✅ Éxito - El contexto de autenticación maneja la redirección
       reset();
       navigate("/dashboard", { replace: true });
     } catch (error) {

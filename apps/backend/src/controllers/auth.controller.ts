@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { authService } from "../services/auth.service.ts";
+import { userMapper } from "../mappers/user.mapper.ts";
 import type { RegisterRequest, LoginRequest } from "../middleware/validation.ts";
 
 export const authController = {
@@ -167,11 +168,69 @@ export const authController = {
         return next(error);
       }
 
-      const user = await authService.getUserById(req.user.userId);
+      const user = await authService.getUserById(req.user.id);
+      const userDTO = userMapper.toDTO(user);
 
       res.status(200).json({
         message: "Información del usuario",
-        data: user,
+        data: userDTO,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  refresh: async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const refreshToken = req.cookies.refreshToken;
+
+      if (!refreshToken) {
+        const error = new Error("Refresh token no encontrado");
+        (error as any).statusCode = 401;
+        return next(error);
+      }
+
+      const { accessToken: newAccessToken } = await authService.refreshAccessToken(
+        refreshToken,
+      );
+
+      res.cookie("accessToken", newAccessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 15 * 60 * 1000,
+      });
+
+      res.status(200).json({
+        message: "Access token renovado",
+        data: { accessToken: newAccessToken },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  logout: async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const refreshToken = req.cookies.refreshToken;
+
+      if (refreshToken) {
+        await authService.revokeRefreshToken(refreshToken);
+      }
+
+      res.clearCookie("accessToken");
+      res.clearCookie("refreshToken");
+
+      res.status(200).json({
+        message: "Sesión cerrada correctamente",
       });
     } catch (error) {
       next(error);

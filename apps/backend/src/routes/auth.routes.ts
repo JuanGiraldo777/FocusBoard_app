@@ -20,3 +20,9 @@ authRouter.post("/logout", authController.logout);
 
 // GET /auth/me (protegido)
 authRouter.get("/me", verifyAccessToken, authController.me);
+
+// POST /auth/refresh
+authRouter.post("/refresh", authController.refresh);
+
+// POST /auth/logout
+authRouter.post("/logout", authController.logout);

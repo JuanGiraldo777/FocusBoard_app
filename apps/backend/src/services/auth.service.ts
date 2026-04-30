@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { randomUUID } from "crypto";
 import { userRepository } from "../repositories/user.repository.ts";
 import { env } from "../config/env.ts";
 
@@ -16,18 +17,25 @@ export interface AuthTokens {
 }
 
 // ─── Helpers de tokens ──────────────────────────────────
-const generateTokens = (userId: number, email: string): AuthTokens => {
+const generateTokens = (
+  userId: number,
+  email: string,
+): AuthTokens & { refreshTokenJti: string } => {
+  const refreshTokenJti = randomUUID();
+
   const accessToken = jwt.sign(
     { sub: userId, email },
     env.ACCESS_TOKEN_SECRET,
     { expiresIn: "15m" },
   );
 
-  const refreshToken = jwt.sign({ sub: userId }, env.REFRESH_TOKEN_SECRET, {
-    expiresIn: "7d",
-  });
+  const refreshToken = jwt.sign(
+    { sub: userId, jti: refreshTokenJti },
+    env.REFRESH_TOKEN_SECRET,
+    { expiresIn: "7d" },
+  );
 
-  return { accessToken, refreshToken };
+  return { accessToken, refreshToken, refreshTokenJti };
 };
 
 // ─── Servicio ────────────────────────────────────────────
@@ -86,7 +94,10 @@ export const authService = {
     }
 
     // 5. Generar tokens
-    const { accessToken, refreshToken } = generateTokens(user.id, user.email);
+    const { accessToken, refreshToken, refreshTokenJti } = generateTokens(
+      user.id,
+      user.email,
+    );
 
     // 6. Hashear refresh token antes de guardar
     const refreshTokenHash = await bcrypt.hash(refreshToken, 12);
@@ -94,10 +105,11 @@ export const authService = {
     // 7. Calcular expiración (7 días)
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-    // 8. Guardar token hasheado en la BD
-    await userRepository.saveRefreshToken(
+    // 8. Guardar token hasheado con jti en la BD
+    await userRepository.saveRefreshTokenWithJti(
       user.id,
       refreshTokenHash,
+      refreshTokenJti,
       expiresAt,
       ipAddress,
       userAgent,
@@ -113,26 +125,41 @@ export const authService = {
       const decoded = jwt.verify(
         refreshToken,
         env.REFRESH_TOKEN_SECRET,
-      ) as { sub: number };
+      ) as { sub: number; jti: string };
 
       const userId = decoded.sub;
+      const jti = decoded.jti;
+
+      if (!jti) {
+        const error = new Error("Token inválido");
+        (error as any).statusCode = 401;
+        throw error;
+      }
 
       // 2. Buscar usuario
-      const user = await userRepository.findByEmail("");
+      const user = await userRepository.findById(userId);
       if (!user || user.id !== userId) {
         const error = new Error("Usuario no encontrado");
         (error as any).statusCode = 401;
         throw error;
       }
 
-      // 3. Generar nuevo access token
+      // 3. Verificar si el token está revocado
+      const isRevoked = await userRepository.isRefreshTokenRevoked(jti);
+      if (isRevoked) {
+        const error = new Error("Refresh token revocado o expirado");
+        (error as any).statusCode = 401;
+        throw error;
+      }
+
+      // 4. Generar nuevo access token
       const newAccessToken = jwt.sign(
         { sub: userId, email: user.email },
         env.ACCESS_TOKEN_SECRET,
         { expiresIn: "15m" },
       );
 
-      // 4. El refresh token sigue siendo el mismo
+      // 5. El refresh token sigue siendo el mismo
       return { accessToken: newAccessToken, refreshToken };
     } catch (error) {
       const err = new Error("Refresh token inválido o expirado");
@@ -142,12 +169,24 @@ export const authService = {
   },
 
   revokeRefreshToken: async (refreshToken: string): Promise<void> => {
-    // En una implementación completa, deberías guardar el token en una blacklist
-    // Por ahora, simplemente validamos que sea válido
     try {
-      jwt.verify(refreshToken, env.REFRESH_TOKEN_SECRET);
+      // 1. Verificar y decodificar el refresh token
+      const decoded = jwt.verify(
+        refreshToken,
+        env.REFRESH_TOKEN_SECRET,
+      ) as { sub: number; jti: string };
+
+      const jti = decoded.jti;
+
+      if (!jti) {
+        return; // Token sin jti, no hay nada que revocar
+      }
+
+      // 2. Marcar como revocado en la BD
+      await userRepository.revokeRefreshToken(jti);
     } catch (error) {
-      // Token inválido, no hay nada que revocar
+      // Token inválido o expirado - no hay nada que revocar
+      // Silenciosamente ignorar errores de revocación
     }
   },
 
