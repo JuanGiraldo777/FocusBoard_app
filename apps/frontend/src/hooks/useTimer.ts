@@ -27,8 +27,13 @@ function getInitialTimeLeft(focusDuration: number): number {
 }
 
 function getInitialState(): TimerState {
-  const savedState = sessionStorage.getItem(STORAGE_KEY.state) as TimerState | null;
-  if (savedState && ["idle", "focusing", "break", "paused"].includes(savedState)) {
+  const savedState = sessionStorage.getItem(
+    STORAGE_KEY.state,
+  ) as TimerState | null;
+  if (
+    savedState &&
+    ["idle", "focusing", "break", "paused"].includes(savedState)
+  ) {
     return savedState;
   }
   return "idle";
@@ -46,13 +51,20 @@ export function useTimer(config?: TimerConfig) {
     onComplete,
   } = config || {};
 
-  const [timeLeft, setTimeLeft] = useState(() => getInitialTimeLeft(focusDuration));
+  const [timeLeft, setTimeLeft] = useState(() =>
+    getInitialTimeLeft(focusDuration),
+  );
   const [state, setState] = useState<TimerState>(getInitialState);
-  const [sessionsCompleted, setSessionsCompleted] = useState(getInitialSessions);
+  const [sessionsCompleted, setSessionsCompleted] =
+    useState(getInitialSessions);
 
   const workerRef = useRef<Worker | null>(null);
   const onCompleteRef = useRef(onComplete);
   const isInitializedRef = useRef(false);
+  const lastCompletedAtRef = useRef<number>(0);
+  const pausedFromStateRef = useRef<TimerState>("focusing");
+  const initialStateRef = useRef<TimerState>(state);
+  const initialTimeLeftRef = useRef<number>(timeLeft);
 
   // Update callback ref when it changes
   useEffect(() => {
@@ -73,6 +85,13 @@ export function useTimer(config?: TimerConfig) {
         sessionStorage.setItem(STORAGE_KEY.timeLeft, String(message.timeLeft));
         sessionStorage.setItem(STORAGE_KEY.lastUpdated, String(Date.now()));
       } else if (message.type === "completed") {
+        // Prevenir ejecución doble: solo procesar si han pasado >500ms desde la última vez
+        const now = Date.now();
+        if (now - lastCompletedAtRef.current < 500) {
+          return; // Ignorar si es muy pronto (doble-call en StrictMode)
+        }
+        lastCompletedAtRef.current = now;
+
         onCompleteRef.current?.();
 
         setState((prevState) => {
@@ -87,24 +106,32 @@ export function useTimer(config?: TimerConfig) {
 
             // Reiniciar worker con nueva duración
             if (workerRef.current) {
-              workerRef.current.postMessage({ type: "start", duration: nextDuration });
+              workerRef.current.postMessage({
+                type: "start",
+                duration: nextDuration,
+              });
             }
           } else if (prevState === "break") {
             nextState = "idle";
             nextDuration = focusDuration;
             setTimeLeft(focusDuration);
             sessionStorage.setItem(STORAGE_KEY.timeLeft, String(focusDuration));
-
             // ✅ Incrementar sesiones completadas cuando break termina
             setSessionsCompleted((prev) => {
               const newSessions = prev + 1;
-              sessionStorage.setItem(STORAGE_KEY.sessionsCompleted, String(newSessions));
+              sessionStorage.setItem(
+                STORAGE_KEY.sessionsCompleted,
+                String(newSessions),
+              );
               return newSessions;
             });
 
             // Reset worker para siguiente sesión
             if (workerRef.current) {
-              workerRef.current.postMessage({ type: "reset", duration: focusDuration });
+              workerRef.current.postMessage({
+                type: "reset",
+                duration: focusDuration,
+              });
             }
           } else {
             nextState = prevState;
@@ -134,11 +161,17 @@ export function useTimer(config?: TimerConfig) {
     isInitializedRef.current = true;
 
     // Si se restauró un estado activo, reiniciar el worker con el timeLeft restaurado
-    if (state === "focusing") {
-      workerRef.current.postMessage({ type: "start", duration: timeLeft });
-    } else if (state === "break") {
-      workerRef.current.postMessage({ type: "start", duration: timeLeft });
-    } else if (state === "paused") {
+    if (initialStateRef.current === "focusing") {
+      workerRef.current.postMessage({
+        type: "start",
+        duration: initialTimeLeftRef.current,
+      });
+    } else if (initialStateRef.current === "break") {
+      workerRef.current.postMessage({
+        type: "start",
+        duration: initialTimeLeftRef.current,
+      });
+    } else if (initialStateRef.current === "paused") {
       workerRef.current.postMessage({ type: "pause" });
     }
   }, []);
@@ -156,6 +189,7 @@ export function useTimer(config?: TimerConfig) {
   }, [focusDuration]);
 
   const pause = useCallback(() => {
+    pausedFromStateRef.current = state;
     setState("paused");
     sessionStorage.setItem(STORAGE_KEY.state, "paused");
     sessionStorage.setItem(STORAGE_KEY.lastUpdated, String(Date.now()));
@@ -163,11 +197,13 @@ export function useTimer(config?: TimerConfig) {
     if (workerRef.current) {
       workerRef.current.postMessage({ type: "pause" });
     }
-  }, []);
+  }, [state]);
 
   const resume = useCallback(() => {
-    setState("focusing");
-    sessionStorage.setItem(STORAGE_KEY.state, "focusing");
+    const restoredState =
+      pausedFromStateRef.current === "break" ? "break" : "focusing";
+    setState(restoredState);
+    sessionStorage.setItem(STORAGE_KEY.state, restoredState);
     sessionStorage.setItem(STORAGE_KEY.lastUpdated, String(Date.now()));
 
     if (workerRef.current) {

@@ -6,9 +6,10 @@ export function Dashboard() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const timer = useTimer({
-    focusDuration: 10,
-    breakDuration: 5,
-    onComplete: () => console.log("Timer completed!"),
+    focusDuration: 25 * 60,
+    breakDuration: 5 * 60,
+    onComplete: () => 
+      console.log("Timer completed!")
   });
 
   const handleLogout = async () => {
