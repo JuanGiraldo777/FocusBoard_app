@@ -1,79 +1,50 @@
-import type { WorkerMessage, WorkerResponse } from '../types/timer';
-
 let intervalId: number | null = null;
-let timeLeft = 0;
-let isRunning = false;
+let timeLeft: number = 0;
+let isPaused: boolean = false;
 
-const sendMessage = (message: WorkerResponse) => {
-  self.postMessage(message);
-};
-
-self.onmessage = (event: MessageEvent<WorkerMessage>) => {
+self.onmessage = (event: MessageEvent) => {
   const message = event.data;
 
   switch (message.type) {
     case 'start':
       if (intervalId) clearInterval(intervalId);
       timeLeft = message.duration;
-      isRunning = true;
-
-      intervalId = setInterval(() => {
-        if (timeLeft > 0) {
+      isPaused = false;
+      
+      self.postMessage({ type: 'tick', timeLeft });
+      
+      intervalId = self.setInterval(() => {
+        if (!isPaused && timeLeft > 0) {
           timeLeft--;
-          sendMessage({ type: 'tick', timeLeft });
-
-          if (timeLeft === 0) {
-            isRunning = false;
-            if (intervalId) clearInterval(intervalId);
-            intervalId = null;
-            sendMessage({ type: 'completed' });
-          }
+          self.postMessage({ type: 'tick', timeLeft });
         }
-      }, 1000);
+        
+        if (timeLeft <= 0) {
+          self.postMessage({ type: 'completed' });
+          if (intervalId) clearInterval(intervalId);
+          intervalId = null;
+        }
+      }, 1000) as unknown as number;
       break;
-
+      
     case 'pause':
-      isRunning = false;
-      if (intervalId) {
-        clearInterval(intervalId);
-        intervalId = null;
-      }
+      isPaused = true;
       break;
-
+      
     case 'resume':
-      if (!isRunning && timeLeft > 0) {
-        isRunning = true;
-        intervalId = setInterval(() => {
-          if (timeLeft > 0) {
-            timeLeft--;
-            sendMessage({ type: 'tick', timeLeft });
-
-            if (timeLeft === 0) {
-              isRunning = false;
-              if (intervalId) clearInterval(intervalId);
-              intervalId = null;
-              sendMessage({ type: 'completed' });
-            }
-          }
-        }, 1000);
-      }
+      isPaused = false;
       break;
-
+      
     case 'reset':
-      isRunning = false;
+      if (intervalId) clearInterval(intervalId);
+      intervalId = null;
       timeLeft = message.duration;
-      if (intervalId) {
-        clearInterval(intervalId);
-        intervalId = null;
-      }
+      isPaused = false;
+      self.postMessage({ type: 'tick', timeLeft });
       break;
-
+      
     case 'terminate':
-      isRunning = false;
-      if (intervalId) {
-        clearInterval(intervalId);
-        intervalId = null;
-      }
+      if (intervalId) clearInterval(intervalId);
       self.close();
       break;
   }

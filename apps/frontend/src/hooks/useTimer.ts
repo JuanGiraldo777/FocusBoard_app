@@ -81,7 +81,7 @@ export function useTimer(config?: TimerConfig) {
       const message = event.data;
 
       if (message.type === "tick") {
-        setTimeLeft(message.timeLeft);
+        setTimeLeft(message.timeLeft!);
         sessionStorage.setItem(STORAGE_KEY.timeLeft, String(message.timeLeft));
         sessionStorage.setItem(STORAGE_KEY.lastUpdated, String(Date.now()));
       } else if (message.type === "completed") {
