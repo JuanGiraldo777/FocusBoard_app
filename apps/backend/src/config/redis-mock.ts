@@ -19,11 +19,12 @@ class RedisMock {
   async set(
     key: string,
     value: string | number,
-    expiresAt?: number,
+    options?: { EX?: number },
   ): Promise<void> {
+    const expiresInSeconds = options?.EX;
     store[key] = {
       value,
-      expiresAt: expiresAt ? Date.now() + expiresAt * 1000 : null,
+      expiresAt: expiresInSeconds ? Date.now() + expiresInSeconds * 1000 : null,
     };
   }
 
