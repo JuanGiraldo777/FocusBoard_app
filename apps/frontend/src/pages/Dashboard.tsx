@@ -1,10 +1,29 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth.ts";
 import { TimerDisplay } from "../components/TimerDisplay.tsx";
+import { useEffect, useState } from "react";
+import { getTodaySessionsCount } from "../services/dashboard.service.ts";
 
 export function Dashboard() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const [todayCount, setTodayCount] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
+
+  const fetchTodayCount = async () => {
+    try {
+      const count = await getTodaySessionsCount();
+      setTodayCount(count);
+    } catch (error) {
+      console.error("Error fetching today's count:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTodayCount();
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -13,6 +32,10 @@ export function Dashboard() {
     } catch (error) {
       console.error("Logout failed:", error);
     }
+  };
+
+  const handleSessionSaved = () => {
+    fetchTodayCount();
   };
 
   return (
@@ -40,12 +63,18 @@ export function Dashboard() {
           </p>
 
           {/* Timer Component */}
-          <TimerDisplay focusDuration={25 * 60} breakDuration={5 * 60} />
+          <TimerDisplay 
+            focusDuration={25 * 60} 
+            breakDuration={5 * 60}
+            onSessionSaved={handleSessionSaved}
+          />
 
           <div className="grid grid-cols-3 gap-4 mt-8">
             <div className="bg-blue-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">0</div>
-              <p className="text-gray-600">Tareas</p>
+              <div className="text-2xl font-bold text-blue-600">
+                {loading ? "..." : todayCount}
+              </div>
+              <p className="text-gray-600">Pomodoros Hoy</p>
             </div>
             <div className="bg-green-50 p-4 rounded-lg">
               <div className="text-2xl font-bold text-green-600">0</div>

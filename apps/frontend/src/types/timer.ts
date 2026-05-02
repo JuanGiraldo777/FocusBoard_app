@@ -3,7 +3,7 @@ export type TimerState = "idle" | "focusing" | "break" | "paused";
 export interface TimerConfig {
   focusDuration?: number;
   breakDuration?: number;
-  onComplete?: () => void;
+  onComplete?: (task?: string) => void;
 }
 
 export interface WorkerResponse {
