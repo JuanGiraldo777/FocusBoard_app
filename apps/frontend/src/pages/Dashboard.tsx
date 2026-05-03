@@ -22,7 +22,22 @@ export function Dashboard() {
   };
 
   useEffect(() => {
-    fetchTodayCount();
+    let mounted = true;
+
+    (async () => {
+      try {
+        const count = await getTodaySessionsCount();
+        if (mounted) setTodayCount(count);
+      } catch (error) {
+        console.error("Error fetching today's count:", error);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const handleLogout = async () => {
@@ -39,11 +54,23 @@ export function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
       <nav className="bg-white shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-indigo-600">FocusBoard</h1>
           <div className="flex gap-4">
+            <button
+              onClick={() => navigate("/rooms")}
+              className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition"
+            >
+              Ver Salas
+            </button>
+            <button
+              onClick={() => navigate("/create-room")}
+              className="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition"
+            >
+              Crear Sala
+            </button>
             <button
               onClick={() => navigate("/history")}
               className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition"
@@ -71,8 +98,8 @@ export function Dashboard() {
           </p>
 
           {/* Timer Component */}
-          <TimerDisplay 
-            focusDuration={25 * 60} 
+          <TimerDisplay
+            focusDuration={25 * 60}
             breakDuration={5 * 60}
             onSessionSaved={handleSessionSaved}
           />

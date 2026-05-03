@@ -1,11 +1,15 @@
 import type { Request, Response, NextFunction } from "express";
 import { authService } from "../services/auth.service.ts";
 import { userMapper } from "../mappers/user.mapper.ts";
-import type { RegisterRequest, LoginRequest } from "../middleware/validation.ts";
+import type {
+  RegisterRequest,
+  LoginRequest,
+} from "../middleware/validation.ts";
+import { createAppError } from "../types/errors.ts";
 
 export const authController = {
   register: async (
-    req: Request<{}, {}, RegisterRequest>,
+    req: Request<Record<string, never>, unknown, RegisterRequest>,
     res: Response,
     next: NextFunction,
   ): Promise<void> => {
@@ -41,7 +45,7 @@ export const authController = {
   },
 
   login: async (
-    req: Request<{}, {}, LoginRequest>,
+    req: Request<Record<string, never>, unknown, LoginRequest>,
     res: Response,
     next: NextFunction,
   ): Promise<void> => {
@@ -88,14 +92,11 @@ export const authController = {
       const refreshToken = req.cookies.refreshToken;
 
       if (!refreshToken) {
-        const error = new Error("Refresh token no encontrado") as any;
-        error.statusCode = 401;
-        return next(error);
+        return next(createAppError("Refresh token no encontrado", 401));
       }
 
-      const { accessToken: newAccessToken } = await authService.refreshAccessToken(
-        refreshToken,
-      );
+      const { accessToken: newAccessToken } =
+        await authService.refreshAccessToken(refreshToken);
 
       res.cookie("accessToken", newAccessToken, {
         httpOnly: true,
@@ -143,9 +144,7 @@ export const authController = {
   ): Promise<void> => {
     try {
       if (!req.user) {
-        const error = new Error("Usuario no autenticado") as any;
-        error.statusCode = 401;
-        return next(error);
+        return next(createAppError("Usuario no autenticado", 401));
       }
 
       const user = await authService.getUserById(req.user.id);

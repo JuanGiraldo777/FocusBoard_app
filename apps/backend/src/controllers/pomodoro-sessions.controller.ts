@@ -1,33 +1,33 @@
 import type { Request, Response, NextFunction } from "express";
+import { ZodError } from "zod";
 import { pomodoroSessionService } from "../services/pomodoro-sessions.service.ts";
 import { createSessionSchema } from "../validators/session.validator.ts";
 import { getRedis } from "../config/redis.ts";
+import { createAppError } from "../types/errors.ts";
 
 export const pomodoroSessionController = {
   create: async (
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> => {
     try {
       const validated = createSessionSchema.parse(req.body);
 
       if (!req.user) {
-        const error = new Error("User not authenticated") as any;
-        error.statusCode = 401;
-        return next(error);
+        return next(createAppError("User not authenticated", 401));
       }
 
       await pomodoroSessionService.createSession(req.user.id, validated);
 
       res.status(201).json({
-        message: "Pomodoro session saved successfully"
+        message: "Pomodoro session saved successfully",
       });
     } catch (error) {
-      if (error instanceof Error && error.name === 'ZodError') {
+      if (error instanceof ZodError) {
         res.status(400).json({
           error: "Validation failed",
-          details: (error as any).errors
+          details: error.issues,
         });
         return;
       }
@@ -38,19 +38,19 @@ export const pomodoroSessionController = {
   getTodayCount: async (
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> => {
     try {
       if (!req.user) {
-        const error = new Error("User not authenticated") as any;
-        error.statusCode = 401;
-        return next(error);
+        return next(createAppError("User not authenticated", 401));
       }
 
-      const count = await pomodoroSessionService.getTodaySessionCount(req.user.id);
+      const count = await pomodoroSessionService.getTodaySessionCount(
+        req.user.id,
+      );
 
       res.status(200).json({
-        data: { count }
+        data: { count },
       });
     } catch (error) {
       next(error);
@@ -60,19 +60,19 @@ export const pomodoroSessionController = {
   getTodaySessions: async (
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> => {
     try {
       if (!req.user) {
-        const error = new Error("User not authenticated") as any;
-        error.statusCode = 401;
-        return next(error);
+        return next(createAppError("User not authenticated", 401));
       }
 
-      const sessions = await pomodoroSessionService.getTodaySessions(req.user.id);
+      const sessions = await pomodoroSessionService.getTodaySessions(
+        req.user.id,
+      );
 
       res.status(200).json({
-        data: sessions
+        data: sessions,
       });
     } catch (error) {
       next(error);
@@ -82,19 +82,19 @@ export const pomodoroSessionController = {
   getWeekSessions: async (
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> => {
     try {
       if (!req.user) {
-        const error = new Error("User not authenticated") as any;
-        error.statusCode = 401;
-        return next(error);
+        return next(createAppError("User not authenticated", 401));
       }
 
-      const sessions = await pomodoroSessionService.getWeekSessions(req.user.id);
+      const sessions = await pomodoroSessionService.getWeekSessions(
+        req.user.id,
+      );
 
       res.status(200).json({
-        data: sessions
+        data: sessions,
       });
     } catch (error) {
       next(error);
@@ -104,13 +104,11 @@ export const pomodoroSessionController = {
   getStats: async (
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> => {
     try {
       if (!req.user) {
-        const error = new Error("User not authenticated") as any;
-        error.statusCode = 401;
-        return next(error);
+        return next(createAppError("User not authenticated", 401));
       }
 
       const cacheKey = `stats:${req.user.id}`;
@@ -123,12 +121,12 @@ export const pomodoroSessionController = {
           if (cached) {
             res.status(200).json({
               data: JSON.parse(cached as string),
-              cached: true
+              cached: true,
             });
             return;
           }
         } catch (cacheError) {
-          console.error('Cache read error:', cacheError);
+          console.error("Cache read error:", cacheError);
         }
       }
 
@@ -139,16 +137,16 @@ export const pomodoroSessionController = {
         try {
           await redis.set(cacheKey, JSON.stringify(stats), { EX: 300 });
         } catch (cacheError) {
-          console.error('Cache write error:', cacheError);
+          console.error("Cache write error:", cacheError);
         }
       }
 
       res.status(200).json({
         data: stats,
-        cached: false
+        cached: false,
       });
     } catch (error) {
       next(error);
     }
-  }
+  },
 };

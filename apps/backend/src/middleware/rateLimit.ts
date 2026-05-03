@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { getRedis } from "../config/redis.ts";
+import { createAppError } from "../types/errors.ts";
 
 // Store in-memory local (fallback si Redis Mock falla)
 const memoryStore: Record<string, { count: number; resetTime: number }> = {};
@@ -32,13 +33,13 @@ export const rateLimitLogin = async (
 
     // Rechazar si se excede el límite
     if (attempts > limit) {
-      const error = new Error("Demasiados intentos. Intenta en 15 minutos");
-      (error as any).statusCode = 429;
-      return next(error);
+      return next(
+        createAppError("Demasiados intentos. Intenta en 15 minutos", 429),
+      );
     }
 
     next();
-  } catch (error) {
+  } catch {
     // Si Redis falla, usar memoria local
     const ip = req.ip || "unknown";
     const now = Date.now();
@@ -55,9 +56,9 @@ export const rateLimitLogin = async (
     memoryStore[key].count++;
 
     if (memoryStore[key].count > 10) {
-      const error = new Error("Demasiados intentos. Intenta en 15 minutos");
-      (error as any).statusCode = 429;
-      return next(error);
+      return next(
+        createAppError("Demasiados intentos. Intenta en 15 minutos", 429),
+      );
     }
 
     next();

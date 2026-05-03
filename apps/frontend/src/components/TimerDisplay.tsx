@@ -268,6 +268,7 @@ export function TimerDisplay({
       </div>
 
       <TaskDeclarationModal
+        key={isModalOpen ? "open" : "closed"}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onStart={handleTaskSubmit}

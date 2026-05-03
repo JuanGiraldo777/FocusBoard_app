@@ -1,53 +1,55 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import type { JwtPayload } from "jsonwebtoken";
 import { env } from "../config/env.ts";
+import { createAppError } from "../types/errors.ts";
 
 // Extender Request para incluir user info
-declare global {
-  namespace Express {
-    interface Request {
-      user?: {
-        id: number;
-        email: string;
-      };
-    }
+declare module "express-serve-static-core" {
+  interface Request {
+    user?: {
+      id: number;
+      email: string;
+    };
   }
 }
 
 export const verifyAccessToken = (
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction,
 ): void => {
   try {
     const token = req.cookies.accessToken;
 
     if (!token) {
-      const error = new Error("Access token no encontrado");
-      (error as any).statusCode = 401;
-      return next(error);
+      return next(createAppError("Access token no encontrado", 401));
     }
 
-    const decoded = jwt.verify(token, env.ACCESS_TOKEN_SECRET) as Record<
-      string,
-      any
-    >;
+    const decoded = jwt.verify(token, env.ACCESS_TOKEN_SECRET) as
+      | JwtPayload
+      | string;
 
     if (typeof decoded === "string" || !decoded.sub || !decoded.email) {
-      const error = new Error("Token inválido");
-      (error as any).statusCode = 401;
-      return next(error);
+      return next(createAppError("Token inválido", 401));
+    }
+
+    const userId =
+      typeof decoded.sub === "number"
+        ? decoded.sub
+        : Number.parseInt(decoded.sub, 10);
+
+    if (!Number.isFinite(userId)) {
+      return next(createAppError("Token inválido", 401));
     }
 
     req.user = {
-      id: decoded.sub as number,
-      email: decoded.email as string,
+      id: userId,
+      email: String(decoded.email),
     };
 
     next();
-  } catch (error) {
-    const err = new Error("Access token inválido o expirado");
-    (err as any).statusCode = 401;
-    next(err);
+  } catch {
+    next(createAppError("Access token inválido o expirado", 401));
   }
 };

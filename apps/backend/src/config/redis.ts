@@ -1,27 +1,27 @@
 import { createClient } from "redis";
 import { createRedisMock } from "./redis-mock.ts";
+import type { IRedisClient } from "./redis.types.ts";
 import { env } from "./env.ts";
 
-type RedisClientType = ReturnType<typeof createClient> | ReturnType<typeof createRedisMock>;
-
-let redisClient: RedisClientType | null = null;
+let redisClient: IRedisClient | null = null;
 
 export async function initRedis(): Promise<void> {
   try {
     const client = createClient({ url: env.REDIS_URL });
     await client.connect();
-    redisClient = client;
+    // Casting al tipo común IRedisClient
+    redisClient = client as unknown as IRedisClient;
     console.log("✓ Redis conectado");
   } catch (error) {
     console.warn(
       "⚠️  Redis no disponible - usando Redis Mock en memoria",
       (error as Error).message,
     );
-    // Usar Redis Mock como fallback
-    redisClient = createRedisMock();
+    // Usar Redis Mock como fallback (ya implementa IRedisClient)
+    redisClient = createRedisMock() as unknown as IRedisClient;
   }
 }
 
-export function getRedis(): RedisClientType | null {
+export function getRedis(): IRedisClient | null {
   return redisClient;
 }

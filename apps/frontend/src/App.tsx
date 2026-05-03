@@ -7,6 +7,8 @@ import Register from "./pages/Register";
 import { Dashboard } from "./pages/Dashboard";
 import Room from "./pages/Room";
 import { History } from "./pages/History";
+import { CreateRoom } from "./pages/CreateRoom";
+import { RoomList } from "./pages/RoomList";
 
 function App() {
   return (
@@ -38,18 +40,34 @@ function App() {
           }
         />
         <Route
-          path="/room/:code"
-          element={
-            <ProtectedRoute>
-              <Room />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/history"
           element={
             <ProtectedRoute>
               <History />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/create-room"
+          element={
+            <ProtectedRoute>
+              <CreateRoom />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/rooms"
+          element={
+            <ProtectedRoute>
+              <RoomList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/room/:code"
+          element={
+            <ProtectedRoute>
+              <Room />
             </ProtectedRoute>
           }
         />
@@ -59,4 +77,3 @@ function App() {
 }
 
 export default App;
-

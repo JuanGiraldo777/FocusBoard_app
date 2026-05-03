@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { randomUUID } from "crypto";
 import { userRepository } from "../repositories/user.repository.ts";
 import { env } from "../config/env.ts";
+import { createAppError } from "../types/errors.ts";
 
 export interface RegisterData {
   email: string;
@@ -40,9 +41,7 @@ export const authService = {
   register: async (data: RegisterData): Promise<AuthTokens> => {
     const existing = await userRepository.findByEmail(data.email);
     if (existing) {
-      const error = new Error("El email ya está registrado") as any;
-      error.statusCode = 409;
-      throw error;
+      throw createAppError("El email ya está registrado", 409);
     }
 
     const passwordHash = await bcrypt.hash(data.password, 12);
@@ -68,15 +67,11 @@ export const authService = {
       : false;
 
     if (!user || !passwordMatch) {
-      const error = new Error("Credenciales inválidas") as any;
-      error.statusCode = 401;
-      throw error;
+      throw createAppError("Credenciales inválidas", 401);
     }
 
     if (!user.is_active) {
-      const error = new Error("Cuenta desactivada") as any;
-      error.statusCode = 403;
-      throw error;
+      throw createAppError("Cuenta desactivada", 403);
     }
 
     const { accessToken, refreshToken, refreshTokenJti } = generateTokens(
@@ -111,17 +106,13 @@ export const authService = {
 
       const user = await userRepository.findById(userId);
       if (!user || user.id !== userId) {
-        const error = new Error("Usuario no encontrado") as any;
-        error.statusCode = 401;
-        throw error;
+        throw createAppError("Usuario no encontrado", 401);
       }
 
       if (jti) {
         const isRevoked = await userRepository.isRefreshTokenRevoked(jti);
         if (isRevoked) {
-          const error = new Error("Refresh token revocado o expirado") as any;
-          error.statusCode = 401;
-          throw error;
+          throw createAppError("Refresh token revocado o expirado", 401);
         }
       }
 
@@ -132,10 +123,8 @@ export const authService = {
       );
 
       return { accessToken: newAccessToken, refreshToken };
-    } catch (error) {
-      const err = new Error("Refresh token inválido o expirado") as any;
-      err.statusCode = 401;
-      throw err;
+    } catch {
+      throw createAppError("Refresh token inválido o expirado", 401);
     }
   },
 
@@ -150,7 +139,7 @@ export const authService = {
       if (!jti) return;
 
       await userRepository.revokeRefreshToken(jti);
-    } catch (error) {
+    } catch {
       // Silenciosamente ignorar
     }
   },
@@ -158,9 +147,7 @@ export const authService = {
   getUserById: async (userId: number) => {
     const user = await userRepository.findById(userId);
     if (!user) {
-      const error = new Error("Usuario no encontrado") as any;
-      error.statusCode = 404;
-      throw error;
+      throw createAppError("Usuario no encontrado", 404);
     }
     return user;
   },

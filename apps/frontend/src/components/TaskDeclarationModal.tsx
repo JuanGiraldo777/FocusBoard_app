@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from "react";
 
 interface TaskDeclarationModalProps {
   isOpen: boolean;
@@ -7,17 +7,22 @@ interface TaskDeclarationModalProps {
   recentTasks: string[];
 }
 
-export function TaskDeclarationModal({ isOpen, onClose, onStart, recentTasks }: TaskDeclarationModalProps) {
-  const [inputValue, setInputValue] = useState('');
-  const [error, setError] = useState('');
+export function TaskDeclarationModal({
+  isOpen,
+  onClose,
+  onStart,
+  recentTasks,
+}: TaskDeclarationModalProps) {
+  const [inputValue, setInputValue] = useState("");
+  const [error, setError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Auto-focus al abrir
   useEffect(() => {
     if (isOpen) {
-      setInputValue('');
-      setError('');
-      setTimeout(() => inputRef.current?.focus(), 100);
+      const timer = window.setTimeout(() => inputRef.current?.focus(), 100);
+
+      return () => window.clearTimeout(timer);
     }
   }, [isOpen]);
 
@@ -28,7 +33,7 @@ export function TaskDeclarationModal({ isOpen, onClose, onStart, recentTasks }: 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isValid) {
-      setError('Mínimo 3 caracteres');
+      setError("Mínimo 3 caracteres");
       return;
     }
     onStart(inputValue.trim());
@@ -36,7 +41,7 @@ export function TaskDeclarationModal({ isOpen, onClose, onStart, recentTasks }: 
 
   const selectSuggestion = (task: string) => {
     setInputValue(task);
-    setError('');
+    setError("");
   };
 
   return (
@@ -56,7 +61,7 @@ export function TaskDeclarationModal({ isOpen, onClose, onStart, recentTasks }: 
             value={inputValue}
             onChange={(e) => {
               setInputValue(e.target.value);
-              setError('');
+              setError("");
             }}
             placeholder="Ej: Estudiar matemáticas"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-2"
@@ -100,8 +105,8 @@ export function TaskDeclarationModal({ isOpen, onClose, onStart, recentTasks }: 
               disabled={!isValid}
               className={`px-4 py-2 rounded-lg text-white transition ${
                 isValid
-                  ? 'bg-indigo-600 hover:bg-indigo-700'
-                  : 'bg-gray-400 cursor-not-allowed'
+                  ? "bg-indigo-600 hover:bg-indigo-700"
+                  : "bg-gray-400 cursor-not-allowed"
               }`}
             >
               Iniciar Timer
