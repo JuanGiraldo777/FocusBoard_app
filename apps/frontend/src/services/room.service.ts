@@ -44,6 +44,28 @@ export async function getRoomByCode(code: string): Promise<RoomData> {
   return response.data;
 }
 
+export async function joinRoom(code: string): Promise<RoomData> {
+  const response = await apiCall<{ message: string; data: RoomData }>(
+    `/api/v1/rooms/${code}/join`,
+    {
+      method: "POST",
+    },
+  );
+  return response.data;
+}
+
+export async function leaveRoom(code: string): Promise<void> {
+  await apiCall<{ message: string }>(`/api/v1/rooms/${code}/leave`, {
+    method: "DELETE",
+  });
+}
+
+export async function deleteRoom(roomId: number): Promise<void> {
+  await apiCall<{ message: string }>(`/api/v1/rooms/${roomId}`, {
+    method: "DELETE",
+  });
+}
+
 export interface ListRoomsParams {
   search?: string;
   limit?: number;
@@ -68,3 +90,12 @@ export async function listPublicRooms(
     activeMembers: room.member_count,
   }));
 }
+
+export const roomService = {
+  createRoom,
+  getRoomByCode,
+  joinRoom,
+  leaveRoom,
+  deleteRoom,
+  listPublicRooms,
+};

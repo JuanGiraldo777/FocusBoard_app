@@ -22,6 +22,11 @@ export interface RawRoomListItem {
   member_count: number;
 }
 
+export interface RawDeletedRoom {
+  id: number;
+  code: string;
+}
+
 export function mapRawRoomToRoom(raw: RawRoom) {
   return {
     id: raw.id,
@@ -125,6 +130,85 @@ const roomRepository = {
 
     const result = await db.query(query, params);
     return result.rows;
+  },
+
+  async findById(roomId: number): Promise<RawRoom | null> {
+    const result = await db.query("SELECT * FROM rooms WHERE id = $1 LIMIT 1", [
+      roomId,
+    ]);
+    return result.rows[0] || null;
+  },
+
+  async countMembers(roomId: number): Promise<number> {
+    const result = await db.query(
+      "SELECT COUNT(*) as count FROM room_members WHERE room_id = $1",
+      [roomId],
+    );
+    return parseInt(result.rows[0].count, 10);
+  },
+
+  async isMember(roomId: number, userId: number): Promise<boolean> {
+    const result = await db.query(
+      "SELECT 1 FROM room_members WHERE room_id = $1 AND user_id = $2 LIMIT 1",
+      [roomId, userId],
+    );
+    return result.rows.length > 0;
+  },
+
+  async addMemberTransactional(
+    client: PoolClient,
+    roomId: number,
+    userId: number,
+  ): Promise<void> {
+    await client.query(
+      `INSERT INTO room_members (room_id, user_id)
+       VALUES ($1, $2)`,
+      [roomId, userId],
+    );
+  },
+
+  async updateLastActivity(
+    roomId: number,
+    client?: PoolClient,
+  ): Promise<void> {
+    const executor = client ?? db;
+    await executor.query("UPDATE rooms SET last_activity = NOW() WHERE id = $1", [
+      roomId,
+    ]);
+  },
+
+  async removeMember(
+    client: PoolClient,
+    roomId: number,
+    userId: number,
+  ): Promise<number> {
+    const result = await client.query(
+      `DELETE FROM room_members
+       WHERE room_id = $1 AND user_id = $2`,
+      [roomId, userId],
+    );
+    return result.rowCount ?? 0;
+  },
+
+  async deleteRoomById(client: PoolClient, roomId: number): Promise<number> {
+    const result = await client.query("DELETE FROM rooms WHERE id = $1", [
+      roomId,
+    ]);
+    return result.rowCount ?? 0;
+  },
+
+  async deleteInactiveRooms(): Promise<RawDeletedRoom[]> {
+    const result = await db.query(
+      `DELETE FROM rooms
+       WHERE last_activity < NOW() - INTERVAL '24 hours'
+       RETURNING id, code`,
+    );
+
+    const rows = result.rows as Array<{ id: string | number; code: string }>;
+    return rows.map((row) => ({
+      id: Number.parseInt(String(row.id), 10),
+      code: row.code,
+    }));
   },
 };
 

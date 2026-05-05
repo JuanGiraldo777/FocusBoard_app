@@ -1,11 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { roomService } from "../services/room.service.ts";
-import {
-  createRoomSchema,
-  listRoomsQuerySchema,
-} from "../validators/room.validator.ts";
-import { ZodError } from "zod";
 import { createAppError } from "../types/errors.ts";
+import type { RoomLocals } from "../types/room.locals.ts";
 
 export const createRoom = async (
   req: Request,
@@ -13,31 +9,17 @@ export const createRoom = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    // Validar request body
-    const validatedData = createRoomSchema.parse(req.body);
-
-    // Crear sala (el usuario viene del JWT token)
     if (!req.user) {
       return next(createAppError("Usuario no autenticado", 401));
     }
 
-    const room = await roomService.createRoom(req.user.id, validatedData);
+    const room = await roomService.createRoom(req.user.id, req.body);
 
     res.status(201).json({
       message: "Sala creada exitosamente",
       data: room,
     });
   } catch (error) {
-    if (error instanceof ZodError) {
-      res.status(400).json({
-        message: "Datos inválidos",
-        errors: error.issues.map((e) => ({
-          field: e.path?.join(".") || "",
-          message: e.message,
-        })),
-      });
-      return;
-    }
     next(error);
   }
 };
@@ -68,11 +50,15 @@ export const getRoomByCode = async (
 
 export const listRooms = async (
   req: Request,
-  res: Response,
+  res: Response<unknown, RoomLocals>,
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const query = listRoomsQuerySchema.parse(req.query);
+    const query = res.locals.listRoomsQuery ?? {
+      search: undefined,
+      limit: 20,
+      offset: 0,
+    };
 
     const rooms = await roomService.listPublicRooms(
       query.search,
@@ -84,16 +70,76 @@ export const listRooms = async (
       data: rooms,
     });
   } catch (error) {
-    if (error instanceof ZodError) {
-      res.status(400).json({
-        message: "Query parameters inválidos",
-        errors: error.issues.map((e) => ({
-          field: e.path?.join(".") || "",
-          message: e.message,
-        })),
-      });
-      return;
+    next(error);
+  }
+};
+
+export const joinRoom = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { code } = req.params;
+    const roomCode = Array.isArray(code) ? code[0] : code;
+
+    if (!req.user) {
+      return next(createAppError("Usuario no autenticado", 401));
     }
+
+    const room = await roomService.joinRoom(req.user.id, roomCode);
+
+    res.status(200).json({
+      message: "Te has unido a la sala exitosamente",
+      data: room,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const leaveRoom = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { code } = req.params;
+    const roomCode = Array.isArray(code) ? code[0] : code;
+
+    if (!req.user) {
+      return next(createAppError("Usuario no autenticado", 401));
+    }
+
+    await roomService.leaveRoom(req.user.id, roomCode);
+
+    res.status(200).json({
+      message: "Has salido de la sala exitosamente",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteRoom = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    if (!req.user) {
+      return next(createAppError("Usuario no autenticado", 401));
+    }
+
+    const roomId = Number.parseInt(Array.isArray(id) ? id[0] : id, 10);
+    await roomService.deleteRoom(req.user.id, roomId);
+
+    res.status(200).json({
+      message: "Sala eliminada exitosamente",
+    });
+  } catch (error) {
     next(error);
   }
 };

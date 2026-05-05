@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth.ts";
-import { listPublicRooms } from "../services/room.service.ts";
+import { joinRoom, listPublicRooms } from "../services/room.service.ts";
 import type { RoomListItem } from "../services/room.service.ts";
+import { normalizeRoomCode } from "../utils/room-code.ts";
 
 export function RoomList() {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ export function RoomList() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [joiningCode, setJoiningCode] = useState<string | null>(null);
 
   // Debounce de 300ms para la búsqueda
   useEffect(() => {
@@ -60,8 +62,20 @@ export function RoomList() {
     }
   };
 
-  const handleJoinRoom = (code: string) => {
-    navigate(`/room/${code}`);
+  const handleJoinRoom = async (code: string) => {
+    const normalizedCode = normalizeRoomCode(code);
+
+    try {
+      setJoiningCode(normalizedCode);
+      setError(null);
+      await joinRoom(normalizedCode);
+      navigate(`/room/${normalizedCode}`);
+    } catch (err) {
+      console.error("Error joining room from list:", err);
+      setError("No se pudo unir a la sala. Intenta de nuevo.");
+    } finally {
+      setJoiningCode(null);
+    }
   };
 
   return (
@@ -169,9 +183,12 @@ export function RoomList() {
                       <p className="text-gray-600 text-sm">Miembros activos</p>
                       <button
                         onClick={() => handleJoinRoom(room.code)}
+                        disabled={joiningCode === room.code}
                         className="mt-3 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm"
                       >
-                        Unirse a Sala
+                        {joiningCode === room.code
+                          ? "Uniéndose..."
+                          : "Unirse a Sala"}
                       </button>
                     </div>
                   </div>

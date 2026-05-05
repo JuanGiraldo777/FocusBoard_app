@@ -1,8 +1,10 @@
 import { useTimer } from "../hooks/useTimer";
 import type { TimerConfig, TimerControls } from "../types/timer";
-import { useMemo, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { TaskDeclarationModal } from "./TaskDeclarationModal";
+import { AmbientSoundControls } from "./AmbientSoundControls.tsx";
 import { savePomodoroSession } from "../services/pomodoro-session.service.ts";
+import { useAmbientAudio } from "../hooks/useAmbientAudio.ts";
 
 const CIRCUMFERENCE = 2 * Math.PI * 90;
 const RECENT_TASKS_KEY = "focusboard:recentTasks";
@@ -31,26 +33,8 @@ export function TimerDisplay({
     }
   });
 
-  const timer: TimerControls = useTimer({
-    focusDuration,
-    breakDuration,
-    onComplete: handleComplete,
-  });
-
-  const currentTotal = useMemo(() => {
-    if (timer.state === "focusing") return focusDuration;
-    if (timer.state === "break") return breakDuration;
-    return focusDuration;
-  }, [timer.state, focusDuration, breakDuration]);
-
-  useEffect(() => {
-    return () => {
-      audioContextRef.current?.close();
-    };
-  }, []);
-
-  function handleComplete() {
-    playNotificationSound();
+  const handleComplete = useCallback(() => {
+    void playNotificationSound();
     showSystemNotification();
 
     if (taskRef.current && startTimeRef.current) {
@@ -67,7 +51,32 @@ export function TimerDisplay({
           console.error("Error saving session:", err);
         });
     }
-  }
+  }, [
+    focusDuration,
+    onSessionSaved,
+    playNotificationSound,
+    showSystemNotification,
+  ]);
+
+  const timer: TimerControls = useTimer({
+    focusDuration,
+    breakDuration,
+    onComplete: handleComplete,
+  });
+
+  const currentTotal = useMemo(() => {
+    if (timer.state === "focusing") return focusDuration;
+    if (timer.state === "break") return breakDuration;
+    return focusDuration;
+  }, [timer.state, focusDuration, breakDuration]);
+
+  const ambientAudio = useAmbientAudio(timer.state === "focusing");
+
+  useEffect(() => {
+    return () => {
+      audioContextRef.current?.close();
+    };
+  }, []);
 
   async function playNotificationSound() {
     try {
@@ -99,7 +108,7 @@ export function TimerDisplay({
     });
   }
 
-  const handleStartClick = () => {
+  const handleStartClick = useCallback(() => {
     if (
       typeof Notification !== "undefined" &&
       Notification.permission === "default"
@@ -109,25 +118,28 @@ export function TimerDisplay({
       );
     }
     setIsModalOpen(true);
-  };
+  }, []);
 
-  const handleTaskSubmit = (task: string) => {
-    setCurrentTask(task);
-    taskRef.current = task;
-    startTimeRef.current = new Date();
-    setIsModalOpen(false);
-    saveRecentTask(task);
-    timer.start();
-  };
-
-  const saveRecentTask = (task: string) => {
+  const saveRecentTask = useCallback((task: string) => {
     setRecentTasks((prev) => {
       const filtered = prev.filter((t) => t !== task);
       const updated = [task, ...filtered].slice(0, MAX_RECENT_TASKS);
       localStorage.setItem(RECENT_TASKS_KEY, JSON.stringify(updated));
       return updated;
     });
-  };
+  }, []);
+
+  const handleTaskSubmit = useCallback(
+    (task: string) => {
+      setCurrentTask(task);
+      taskRef.current = task;
+      startTimeRef.current = new Date();
+      setIsModalOpen(false);
+      saveRecentTask(task);
+      timer.start();
+    },
+    [saveRecentTask, timer],
+  );
 
   const progress = timer.timeLeft / currentTotal;
   const strokeDashoffset = CIRCUMFERENCE * (1 - progress);
@@ -147,7 +159,7 @@ export function TimerDisplay({
   const stateText = stateTextMap[timer.state] || "Desconocido";
 
   return (
-    <div className="max-w-md mx-auto bg-gradient-to-br from-indigo-50 to-blue-50 rounded-lg p-6 shadow-md">
+    <div className="max-w-md mx-auto bg-linear-to-br from-indigo-50 to-blue-50 rounded-lg p-6 shadow-md">
       {currentTask &&
         (timer.state === "focusing" || timer.state === "paused") && (
           <div className="bg-white rounded-lg p-4 mb-6 shadow-sm border-l-4 border-indigo-500">
@@ -207,7 +219,19 @@ export function TimerDisplay({
         Sesiones completadas: {timer.sessionsCompleted}
       </p>
 
-      <div className="flex flex-wrap gap-3 justify-center">
+      <AmbientSoundControls
+        options={ambientAudio.options}
+        selectedSoundId={ambientAudio.selectedSoundId}
+        selectedSoundLabel={ambientAudio.selectedSoundLabel}
+        selectedSoundDescription={ambientAudio.selectedSoundDescription}
+        volume={ambientAudio.volume}
+        status={ambientAudio.status}
+        error={ambientAudio.error}
+        onSelectSound={ambientAudio.setSelectedSoundId}
+        onVolumeChange={ambientAudio.setVolume}
+      />
+
+      <div className="flex flex-wrap gap-3 justify-center mt-6">
         {timer.state === "idle" && (
           <button
             onClick={handleStartClick}

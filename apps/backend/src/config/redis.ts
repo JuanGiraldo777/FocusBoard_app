@@ -1,24 +1,31 @@
 import { createClient } from "redis";
-import { createRedisMock } from "./redis-mock.ts";
 import type { IRedisClient } from "./redis.types.ts";
 import { env } from "./env.ts";
+import { createRedisMock } from "./redis-mock.ts";
 
 let redisClient: IRedisClient | null = null;
 
 export async function initRedis(): Promise<void> {
   try {
-    const client = createClient({ url: env.REDIS_URL });
+    const client = createClient({
+      url: env.REDIS_URL,
+      socket: {
+        tls: true,
+        rejectUnauthorized: false,
+      },
+    });
+
     await client.connect();
+
     // Casting al tipo común IRedisClient
     redisClient = client as unknown as IRedisClient;
-    console.log("✓ Redis conectado");
+    console.log("✓ Redis conectado a Upstash");
   } catch (error) {
     console.warn(
-      "⚠️  Redis no disponible - usando Redis Mock en memoria",
-      (error as Error).message,
+      `⚠️ Redis no disponible (${(error as Error).message}) - usando Mock en memoria`,
     );
-    // Usar Redis Mock como fallback (ya implementa IRedisClient)
-    redisClient = createRedisMock() as unknown as IRedisClient;
+    // Fallback a mock de Redis en memoria
+    redisClient = createRedisMock();
   }
 }
 

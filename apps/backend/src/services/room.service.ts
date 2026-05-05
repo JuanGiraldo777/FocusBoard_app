@@ -6,6 +6,12 @@ import {
   mapRawRoomToRoom,
   mapRawRoomToRoomListItem,
 } from "../repositories/room.repository.ts";
+import { createAppError } from "../types/errors.ts";
+import {
+  emitMemberLeftToRoom,
+  emitRoomDeleted,
+  emitToUser,
+} from "../sockets/room.socket.ts";
 
 type Room = ReturnType<typeof mapRawRoomToRoom>;
 type RoomListItem = ReturnType<typeof mapRawRoomToRoomListItem> & {
@@ -142,6 +148,170 @@ const roomService = {
     }
 
     return roomsWithMembers;
+  },
+
+  /**
+   * Unirse a una sala por código
+   * Valida existencia, capacidad y membresía previa
+   * Usa transacción atómica: INSERT + UPDATE last_activity
+   * Actualiza SET de Redis con el nuevo userId
+   */
+  async joinRoom(userId: number, code: string): Promise<Room> {
+    // 1. Buscar sala por código
+    const rawRoom = await roomRepository.findByCode(code);
+    if (!rawRoom) {
+      throw createAppError("Sala no encontrada", 404);
+    }
+
+    // 2. Verificar capacidad (count < max_members)
+    const memberCount = await roomRepository.countMembers(rawRoom.id);
+    if (memberCount >= rawRoom.max_members) {
+      throw createAppError("La sala está llena", 409);
+    }
+
+    // 3. Verificar que no sea ya miembro
+    const isAlreadyMember = await roomRepository.isMember(rawRoom.id, userId);
+    if (isAlreadyMember) {
+      throw createAppError("Ya eres miembro de esta sala", 409);
+    }
+
+    // 4. Transacción atómica: INSERT + UPDATE last_activity
+    const client = await roomRepository.getClient();
+    try {
+      await client.query("BEGIN");
+
+      // Agregar miembro
+      await roomRepository.addMemberTransactional(client, rawRoom.id, userId);
+
+      // Actualizar last_activity dentro de la misma transacción
+      await roomRepository.updateLastActivity(rawRoom.id, client);
+
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+
+    // 5. Actualizar SET de Redis con el nuevo userId
+    const redis = getRedis();
+    if (redis) {
+      try {
+        await redis.sAdd(`room:${rawRoom.code}:members`, userId.toString());
+      } catch (redisError) {
+        console.error("Redis sAdd error:", redisError);
+      }
+    }
+
+    return mapRawRoomToRoom(rawRoom);
+  },
+
+  /**
+   * Elimina al usuario de room_members sin borrar historial pomodoro.
+   */
+  async leaveRoom(userId: number, code: string): Promise<void> {
+    const rawRoom = await roomRepository.findByCode(code);
+    if (!rawRoom) {
+      throw createAppError("Sala no encontrada", 404);
+    }
+
+    const client = await roomRepository.getClient();
+
+    try {
+      await client.query("BEGIN");
+
+      const deletedCount = await roomRepository.removeMember(
+        client,
+        rawRoom.id,
+        userId,
+      );
+
+      if (deletedCount === 0) {
+        throw createAppError("No eres miembro de esta sala", 409);
+      }
+
+      await roomRepository.updateLastActivity(rawRoom.id, client);
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+
+    const redis = getRedis();
+    if (redis) {
+      try {
+        await redis.sRem(`room:${rawRoom.code}:members`, userId.toString());
+      } catch (redisError) {
+        console.error("Redis sRem error:", redisError);
+      }
+    }
+
+    emitMemberLeftToRoom(rawRoom.code, userId);
+  },
+
+  /**
+   * Elimina sala completa. Solo owner puede ejecutar.
+   * room_members se elimina por CASCADE en DB.
+   */
+  async deleteRoom(userId: number, roomId: number): Promise<void> {
+    const rawRoom = await roomRepository.findById(roomId);
+    if (!rawRoom) {
+      throw createAppError("Sala no encontrada", 404);
+    }
+
+    if (rawRoom.owner_id !== userId) {
+      throw createAppError("Solo el owner puede eliminar la sala", 403);
+    }
+
+    const client = await roomRepository.getClient();
+
+    try {
+      await client.query("BEGIN");
+
+      const deletedCount = await roomRepository.deleteRoomById(client, roomId);
+      if (deletedCount === 0) {
+        throw createAppError("Sala no encontrada", 404);
+      }
+
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+
+    const redis = getRedis();
+    let memberIds: string[] = [];
+
+    if (redis) {
+      try {
+        memberIds = await redis.sMembers(`room:${rawRoom.code}:members`);
+      } catch (e) {
+        console.warn("No se pudo leer miembros antes de borrar la sala:", e);
+      }
+    }
+
+    if (redis) {
+      try {
+        await redis.del(`room:${rawRoom.code}:members`);
+      } catch (redisError) {
+        console.error("Redis del error:", redisError);
+      }
+    }
+
+    // Notificar por sala (broadcast) y por usuario individualmente
+    emitRoomDeleted(rawRoom.code);
+
+    for (const id of memberIds) {
+      const parsed = Number.parseInt(id, 10);
+      if (Number.isFinite(parsed)) {
+        emitToUser(parsed, "room:deleted", { code: rawRoom.code });
+      }
+    }
   },
 };
 

@@ -1,8 +1,11 @@
 ## ⚠️ Problemas: Redis Mock en Desarrollo → Redis Real en Producción
 
+> Nota: este documento quedó como referencia histórica. El estado actual del proyecto requiere Redis real y se levanta con Docker Compose desde la raíz del monorepo.
+
 ### 🔴 PROBLEMA 1: PERSISTENCIA (Critical)
 
 **En Desarrollo (Redis Mock):**
+
 ```typescript
 // Datos guardados solo en RAM del proceso Node.js
 const store: MockRedisStore = {};
@@ -13,6 +16,7 @@ const store: MockRedisStore = {};
 ```
 
 **En Producción (Redis Real):**
+
 ```
 Redis SIGUE CORRIENDO aunque el backend reinicie
 → Los rate limiting counters PERSISTEN
@@ -20,6 +24,7 @@ Redis SIGUE CORRIENDO aunque el backend reinicie
 ```
 
 **Impacto Real:**
+
 - En desarrollo: Usuario puede hacer 100 intentos si reinicia el servidor
 - En producción: Usuario está limitado después de 10 intentos
 - **INCONSISTENCIA CRÍTICA**
@@ -29,15 +34,17 @@ Redis SIGUE CORRIENDO aunque el backend reinicie
 ### 🔴 PROBLEMA 2: MULTI-INSTANCIA / ESCALABILIDAD
 
 **En Desarrollo (1 servidor, Redis Mock):**
+
 ```
 Servidor 1 (Node.js)
 ├─ RAM Local
-└─ store = { 
+└─ store = {
     "login_attempts:127.0.0.1": 5
   }
 ```
 
 **En Producción (3 servidores, Redis Real):**
+
 ```
 Load Balancer
 ├─ Servidor 1 → Redis Central
@@ -46,6 +53,7 @@ Load Balancer
 ```
 
 **CON Redis Mock en Producción:**
+
 ```
 Servidor 1    Servidor 2    Servidor 3
 store: {      store: {      store: {
@@ -56,6 +64,7 @@ store: {      store: {      store: {
 ```
 
 **Impacto Real:**
+
 - Usuario puede hacer 30 intentos (10 × 3 servidores) en lugar de 10
 - **BYPASS TOTAL de rate limiting en producción**
 
@@ -64,6 +73,7 @@ store: {      store: {      store: {
 ### 🔴 PROBLEMA 3: DATA LOSS EN DEPLOYMENTS
 
 **En Desarrollo:**
+
 ```
 npm run dev (reinicia el servidor)
 → Redis Mock se reinicia
@@ -72,6 +82,7 @@ npm run dev (reinicia el servidor)
 ```
 
 **En Producción (si usaras Mock):**
+
 ```
 Deploy v1.2.3 (kill proceso Node.js)
   ↓ Todos los datos de rate limiting se pierden
@@ -80,6 +91,7 @@ Deploy v1.2.4 (restart proceso)
 ```
 
 **Impacto Real:**
+
 - Atacante puede explotar ventana de deployment
 - Múltiples deploys = oportunidades para ataque de fuerza bruta
 - **SECURITY HOLE CRÍTICA**
@@ -89,6 +101,7 @@ Deploy v1.2.4 (restart proceso)
 ### 🟡 PROBLEMA 4: PERFORMANCE
 
 **Redis Mock (In-Memory Búsqueda Linear):**
+
 ```javascript
 async incr(key) {
   // O(1) para acceso directo: store[key] = {...}
@@ -98,6 +111,7 @@ async incr(key) {
 ```
 
 **Redis Real:**
+
 ```
 Redis C Implementation
 ├─ Optimizado para operaciones clave-valor
@@ -106,6 +120,7 @@ Redis C Implementation
 ```
 
 **Impacto Real:**
+
 - En desarrollo con 100 usuarios: Mock es rápido
 - En producción con 10,000 usuarios: Mock sería lentísimo
 - **DIFERENCIA EN PERFORMANCE NOCHE Y DÍA**
@@ -115,6 +130,7 @@ Redis C Implementation
 ### 🟡 PROBLEMA 5: FEATURES FALTANTES
 
 **Redis Mock (limitado):**
+
 ```typescript
 // Implemented:
 ✅ INCR, GET, SET, DEL, EXPIRE, TTL, KEYS
@@ -132,6 +148,7 @@ Redis C Implementation
 ```
 
 **Impacto Real:**
+
 - En desarrollo: Funciona porque usas pocas features
 - En producción: Pueden necesitar HSET, LPUSH, etc.
 - **SORPRESAS EN PROD**
@@ -141,6 +158,7 @@ Redis C Implementation
 ### 🟡 PROBLEMA 6: COMPORTAMIENTO DIFERENTE
 
 **Redis Mock (Decisiones simplificadas):**
+
 ```typescript
 async expire(key, seconds): Promise<void> {
   if (store[key]) {
@@ -153,6 +171,7 @@ async expire(key, seconds): Promise<void> {
 ```
 
 **Redis Real:**
+
 ```
 EXPIRE key 0     → Borra la key (diferente del Mock)
 EXPIRE key -1    → Error (diferente del Mock)
@@ -160,6 +179,7 @@ EXPIRE noexist   → 0 (Handled diferente)
 ```
 
 **Impacto Real:**
+
 - Edge cases funcionan en dev pero fallan en prod
 - **BUGS QUE NO VES HASTA PRODUCCIÓN**
 
@@ -195,6 +215,7 @@ export function createCacheClient(): CacheClient {
 ```
 
 **Ventajas:**
+
 - ✅ Mismo código en dev y prod
 - ✅ Fácil cambiar de Mock a Real
 - ✅ Tests pueden usar Mock
@@ -206,7 +227,7 @@ export function createCacheClient(): CacheClient {
 
 ```yaml
 # docker-compose.yml
-version: '3.8'
+version: "3.8"
 services:
   redis:
     image: redis:7-alpine
@@ -225,6 +246,7 @@ services:
 ```
 
 **Ventajas:**
+
 - ✅ Redis real en desarrollo
 - ✅ Mismo entorno que producción
 - ✅ Sin sorpresas en prod
@@ -236,11 +258,11 @@ services:
 
 ```typescript
 // .env
-USE_REDIS_MOCK=true  // dev
-USE_REDIS_MOCK=false // prod
+USE_REDIS_MOCK = true; // dev
+USE_REDIS_MOCK = false; // prod
 
 // config/redis.ts
-if (process.env.USE_REDIS_MOCK === 'true') {
+if (process.env.USE_REDIS_MOCK === "true") {
   // Desarrollo: Fast startup, sin dependencias
   return createRedisMock();
 }
@@ -252,6 +274,7 @@ return client;
 ```
 
 **Ventajas:**
+
 - ✅ Rápido en desarrollo sin configurar Redis
 - ✅ Producción con Redis real y validaciones
 - ✅ Tests pueden usar mock
@@ -261,14 +284,14 @@ return client;
 
 ## 📋 RESUMEN DE PROBLEMAS
 
-| Problema | Severidad | Impacto | Solución |
-|----------|-----------|--------|----------|
-| Data loss en restart | 🔴 CRÍTICA | Contador se resetea | Usar Redis real o Docker |
-| Multi-instancia bypass | 🔴 CRÍTICA | 10x más intentos permitidos | Usar Redis central |
-| Security hole en deploy | 🔴 CRÍTICA | Ventana de ataque | Usar Redis persistente |
-| Performance diferente | 🟡 ALTA | Lento en prod | Usar Redis real |
-| Features faltantes | 🟡 MEDIA | Edge cases | Abstractión + Tests |
-| Comportamiento diferente | 🟡 MEDIA | Bugs en prod | Usar Redis real |
+| Problema                 | Severidad  | Impacto                     | Solución                 |
+| ------------------------ | ---------- | --------------------------- | ------------------------ |
+| Data loss en restart     | 🔴 CRÍTICA | Contador se resetea         | Usar Redis real o Docker |
+| Multi-instancia bypass   | 🔴 CRÍTICA | 10x más intentos permitidos | Usar Redis central       |
+| Security hole en deploy  | 🔴 CRÍTICA | Ventana de ataque           | Usar Redis persistente   |
+| Performance diferente    | 🟡 ALTA    | Lento en prod               | Usar Redis real          |
+| Features faltantes       | 🟡 MEDIA   | Edge cases                  | Abstractión + Tests      |
+| Comportamiento diferente | 🟡 MEDIA   | Bugs en prod                | Usar Redis real          |
 
 ---
 
@@ -301,6 +324,7 @@ return client;
 ## 🚀 PRÓXIMOS PASOS
 
 ¿Quieres que:
+
 1. ✅ Cree `docker-compose.yml` para Redis real en desarrollo
 2. ✅ Abstracción mejor para Redis Mock/Real
 3. ✅ Tests que validen comportamiento en ambos

@@ -9,6 +9,7 @@ import Room from "./pages/Room";
 import { History } from "./pages/History";
 import { CreateRoom } from "./pages/CreateRoom";
 import { RoomList } from "./pages/RoomList";
+import { JoinRoom } from "./pages/JoinRoom";
 
 function App() {
   return (
@@ -60,6 +61,14 @@ function App() {
           element={
             <ProtectedRoute>
               <RoomList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/join"
+          element={
+            <ProtectedRoute>
+              <JoinRoom />
             </ProtectedRoute>
           }
         />
