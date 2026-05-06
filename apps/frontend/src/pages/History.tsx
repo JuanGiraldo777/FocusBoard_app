@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth.ts";
 import {
   getTodaySessions,
   getWeekSessions,
@@ -18,8 +17,8 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Cell,
 } from "recharts";
+import { BarChart2, Flame, CheckCircle, ArrowRight } from "lucide-react";
 
 interface Session {
   id: number;
@@ -42,14 +41,32 @@ interface Stats {
   currentStreak: number;
 }
 
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{ value: number }>;
+  label?: string;
+}
+
+ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white dark:bg-[#1A1D27] border border-[#EAECF0] dark:border-[#2D3748] rounded-lg p-3 shadow-lg">
+          <p className="text-sm font-medium text-gray-800 dark:text-white">{formatDay(label || '')}</p>
+          <p className="text-sm text-[#F5A623]">{`${payload[0].value} sesiones`}</p>
+        </div>
+      );
+    }
+    return null;
+  };
+
 export function History() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
   const [todaySessions, setTodaySessions] = useState<Session[]>([]);
   const [weekSessions, setWeekSessions] = useState<WeekDay[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [dailyGoal, setDailyGoal] = useState<number>(8);
   const [loading, setLoading] = useState(true);
+  const [period, setPeriod] = useState<'today' | 'week' | 'month'>('week');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -75,42 +92,37 @@ export function History() {
     fetchData();
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate("/login", { replace: true });
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
-  };
-
-  // Calculate progress towards daily goal
-  const todayCompleted = todaySessions.filter(
-    (s) => s.status === "completed",
-  ).length;
-  const goalProgress = Math.min((todayCompleted / dailyGoal) * 100, 100);
+ 
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
-        <nav className="bg-white shadow-md">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-indigo-600">FocusBoard</h1>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
-            >
-              Cerrar Sesión
-            </button>
+      <div className="min-h-screen bg-[#F7F8FA] dark:bg-[#1C2333] p-6">
+        <div className="max-w-7xl mx-auto space-y-8">
+          {/* Header Skeleton */}
+          <div className="flex items-center justify-between animate-pulse">
+            <div className="h-8 bg-gray-200 dark:bg-[#2D3748] rounded w-48"></div>
+            <div className="h-10 bg-gray-200 dark:bg-[#2D3748] rounded w-72"></div>
           </div>
-        </nav>
-        <div className="max-w-7xl mx-auto px-4 py-12">
-          <div className="bg-white rounded-lg shadow-md p-8 text-center">
-            <div className="animate-pulse space-y-4">
-              <div className="h-8 bg-gray-200 rounded w-1/2 mx-auto"></div>
-              <div className="h-32 bg-gray-200 rounded"></div>
-              <div className="h-8 bg-gray-200 rounded w-3/4 mx-auto"></div>
-            </div>
+          {/* Stats Cards Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white dark:bg-[#1A1D27] border border-[#EAECF0] dark:border-[#2D3748] rounded-xl p-5 animate-pulse">
+                <div className="h-4 bg-gray-200 dark:bg-[#2D3748] rounded w-24 mb-4"></div>
+                <div className="h-10 bg-gray-200 dark:bg-[#2D3748] rounded w-16"></div>
+              </div>
+            ))}
+          </div>
+          {/* Chart Skeleton */}
+          <div className="bg-white dark:bg-[#1A1D27] border border-[#EAECF0] dark:border-[#2D3748] rounded-xl p-5 animate-pulse">
+            <div className="h-6 bg-gray-200 dark:bg-[#2D3748] rounded w-48 mb-6"></div>
+            <div className="h-64 bg-gray-200 dark:bg-[#2D3748] rounded"></div>
+          </div>
+          {/* Sessions List Skeleton */}
+          <div className="bg-white dark:bg-[#1A1D27] border border-[#EAECF0] dark:border-[#2D3748] rounded-xl p-5 animate-pulse">
+            <div className="h-6 bg-gray-200 dark:bg-[#2D3748] rounded w-48 mb-4"></div>
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-12 bg-gray-200 dark:bg-[#2D3748] rounded mb-3 last:mb-0"></div>
+            ))}
           </div>
         </div>
       </div>
@@ -118,135 +130,122 @@ export function History() {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
-      <nav className="bg-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-indigo-600">FocusBoard</h1>
-          <button
-            onClick={handleLogout}
-            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
-          >
-            Cerrar Sesión
-          </button>
+    <div className="min-h-screen bg-[#F7F8FA] dark:bg-[#1C2333] p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <BarChart2 className="w-8 h-8 text-[#F5A623]" />
+            <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">Historial</h1>
+          </div>
+          {/* Period Selector */}
+          <div className="flex gap-1 bg-white dark:bg-[#1A1D27] border border-[#EAECF0] dark:border-[#2D3748] rounded-lg p-1">
+            {['Hoy', 'Esta semana', 'Este mes'].map((tab) => {
+              const value = tab === 'Hoy' ? 'today' : tab === 'Esta semana' ? 'week' : 'month';
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setPeriod(value)}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    period === value
+                      ? 'bg-[#F5A623] text-white'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2D3748]'
+                  }`}
+                >
+                  {tab}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </nav>
 
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <h2 className="text-3xl font-bold text-gray-800 mb-6">
-            Historial de Pomodoros
-          </h2>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">
-                {stats?.totalPomodoros || 0}
-              </div>
-              <p className="text-gray-600">Total Pomodoros</p>
-            </div>
-            <div className="bg-green-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">
-                {formatTime(stats?.totalMinutes || 0)}
-              </div>
-              <p className="text-gray-600">Tiempo Total</p>
-            </div>
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">
-                {stats?.currentStreak || 0} días
-              </div>
-              <p className="text-gray-600">Racha Actual</p>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Pomodoros completados */}
+          <div className="bg-white dark:bg-[#1A1D27] border border-[#EAECF0] dark:border-[#2D3748] rounded-xl p-5">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Pomodoros completados</p>
+            <div className="text-4xl font-bold text-[#F5A623]">{stats?.totalPomodoros || 0}</div>
+          </div>
+          {/* Tiempo total enfocado */}
+          <div className="bg-white dark:bg-[#1A1D27] border border-[#EAECF0] dark:border-[#2D3748] rounded-xl p-5">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Tiempo total enfocado</p>
+            <div className="text-4xl font-bold text-gray-800 dark:text-white">
+              {stats?.totalMinutes ? (() => {
+                const h = Math.floor(stats.totalMinutes / 60);
+                const m = stats.totalMinutes % 60;
+                return `${h}h ${m}m`;
+              })() : '0h 0m'}
             </div>
           </div>
-
-          {/* Daily Progress */}
-          <div className="mb-8">
-            <h3 className="text-xl font-semibold text-gray-700 mb-4">
-              Progreso de Hoy
-            </h3>
-            <div className="bg-gray-200 rounded-full h-6 overflow-hidden">
-              <div
-                className="bg-indigo-600 h-full rounded-full transition-all duration-500"
-                style={{ width: `${goalProgress}%` }}
-              ></div>
-            </div>
-            <p className="text-gray-600 mt-2">
-              {todayCompleted} de {dailyGoal} pomodoros completados
-            </p>
-          </div>
-
-          {/* Weekly Chart */}
-          <div className="mb-8">
-            <h3 className="text-xl font-semibold text-gray-700 mb-4">
-              Pomodoros esta Semana
-            </h3>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={weekSessions}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis
-                    dataKey="day"
-                    tickFormatter={(day) => formatDay(day)}
-                  />
-                  <YAxis />
-                  <Tooltip
-                    formatter={(value) => [`${value} sesiones`, "Cantidad"]}
-                    labelFormatter={(day) => formatDay(day)}
-                  />
-                  <Bar dataKey="count" fill="#4f46e5">
-                    {weekSessions.map((_, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={index === 0 ? "#4f46e5" : "#818cf8"}
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+          {/* Racha actual */}
+          <div className="bg-white dark:bg-[#1A1D27] border border-[#EAECF0] dark:border-[#2D3748] rounded-xl p-5">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Racha actual</p>
+            <div className="flex items-center gap-2">
+              <span className="text-4xl font-bold text-[#F5A623]">{stats?.currentStreak || 0}</span>
+              <Flame className="w-6 h-6 text-[#F5A623]" />
+              <span className="text-sm text-gray-500 dark:text-gray-400">dias consecutivos</span>
             </div>
           </div>
+        </div>
 
-          {/* Today's Sessions List */}
-          <div>
-            <h3 className="text-xl font-semibold text-gray-700 mb-4">
-              Sesiones de Hoy
-            </h3>
-            {todaySessions.length === 0 ? (
-              <p className="text-gray-500 italic">No hay sesiones hoy</p>
-            ) : (
-              <div className="space-y-4">
-                {todaySessions.map((session) => (
-                  <div
-                    key={session.id}
-                    className="bg-gray-50 p-4 rounded-lg border-l-4 border-indigo-500"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-semibold text-gray-800">
-                          {session.task_label}
-                        </h4>
-                        <p className="text-gray-600 text-sm">
-                          {formatDateTime(session.started_at)} - Duración:{" "}
-                          {formatTime(session.duration / 60)}
-                        </p>
-                      </div>
-                      <span
-                        className={`px-3 py-1 rounded-full text-sm ${
-                          session.status === "completed"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
-                      >
-                        {session.status === "completed"
-                          ? "Completada"
-                          : session.status}
-                      </span>
-                    </div>
+        {/* Weekly Chart */}
+        <div className="bg-white dark:bg-[#1A1D27] border border-[#EAECF0] dark:border-[#2D3748] rounded-xl p-5">
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6">Pomodoros esta Semana</h2>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={weekSessions}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#EAECF0" />
+                <XAxis
+                  dataKey="day"
+                  tickFormatter={(day) => formatDay(day)}
+                  tick={{ fontSize: 12, fill: '#6B7280' }}
+                  axisLine={{ stroke: '#EAECF0' }}
+                />
+                <YAxis
+                  tick={{ fontSize: 12, fill: '#6B7280' }}
+                  axisLine={{ stroke: '#EAECF0' }}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar dataKey="count" fill="#F5A623" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Today's Sessions List */}
+        <div className="bg-white dark:bg-[#1A1D27] border border-[#EAECF0] dark:border-[#2D3748] rounded-xl p-5">
+          <h2 className="text-base font-semibold text-gray-800 dark:text-white mb-4">Sesiones de hoy</h2>
+          {todaySessions.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 gap-4">
+              <BarChart2 className="w-16 h-16 text-gray-300 dark:text-[#2D3748]" />
+              <p className="text-lg font-medium text-gray-500 dark:text-gray-400">Sin sesiones todavia</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 text-center max-w-md">
+                Inicia tu primer Pomodoro para ver tu historial aqui
+              </p>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="flex items-center gap-2 px-4 py-2 bg-[#F5A623] text-white rounded-lg hover:bg-[#F5A623]/90 transition-colors"
+              >
+                Ir al Dashboard
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="divide-y divide-[#EAECF0] dark:divide-[#2D3748]">
+              {todaySessions.map((session) => (
+                <div key={session.id} className="flex justify-between items-center py-3">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                    <span className="text-sm font-medium text-gray-800 dark:text-white">{session.task_label}</span>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className="text-sm text-gray-500 dark:text-gray-400">{formatTime(session.duration / 60)}</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">{formatDateTime(session.started_at)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

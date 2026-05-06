@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth.ts";
+import { ArrowLeft, Globe, Lock } from "lucide-react";
 import { createRoom } from "../services/room.service.ts";
 
 export function CreateRoom() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -69,43 +68,36 @@ export function CreateRoom() {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate("/login", { replace: true });
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
-      <nav className="bg-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-indigo-600">
-            FocusBoard - Crear Sala
-          </h1>
+    <div className="min-h-screen bg-[#F7F8FA] dark:bg-[#1A1D27]">
+      <header className="border-b border-[#EAECF0] dark:border-[#2D3748] bg-transparent">
+        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 flex items-center gap-4">
           <button
-            onClick={handleLogout}
-            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+            type="button"
+            onClick={() => navigate("/rooms")}
+            className="inline-flex items-center gap-2 text-sm font-medium text-[#1C2333] dark:text-white"
           >
-            Cerrar Sesión
+            <ArrowLeft className="h-4 w-4" />
+            Salas
           </button>
+          <div className="ml-4">
+            <h1 className="text-2xl font-semibold text-[#1C2333] dark:text-white">
+              Crear sala de trabajo
+            </h1>
+            <p className="mt-1 text-sm text-[#4B5563] dark:text-[#9CA3AF]">
+              Configura tu espacio de enfoque compartido
+            </p>
+          </div>
         </div>
-      </nav>
+      </header>
 
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="max-w-md mx-auto bg-white rounded-lg shadow-md p-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">
-            Crear Nueva Sala
-          </h2>
-
+      <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-lg rounded-xl border border-[#EAECF0] bg-white p-8 shadow-sm dark:border-[#2D3748] dark:bg-[#1A1D27]">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Nombre de la sala */}
             <div>
               <label
                 htmlFor="name"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="block text-sm font-medium text-[#1C2333] dark:text-white mb-2"
               >
                 Nombre de la sala
               </label>
@@ -116,58 +108,87 @@ export function CreateRoom() {
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
                 }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="Ej: Estudio Grupal"
+                className="w-full rounded-lg border border-[#EAECF0] bg-white px-4 py-2 text-sm text-[#1C2333] placeholder:text-[#9CA3AF] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 dark:border-[#2D3748] dark:bg-[#1A1D27] dark:text-white dark:placeholder:text-[#9CA3AF]"
+                placeholder="Ej: Dev Team, Study Group..."
               />
               {errors.name && (
                 <p className="mt-1 text-sm text-red-600">{errors.name}</p>
               )}
             </div>
 
-            {/* Visibilidad */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <p className="block text-sm font-medium text-[#1C2333] dark:text-white mb-3">
                 Visibilidad
-              </label>
-              <div className="flex gap-4">
-                <label className="flex items-center">
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                <label
+                  className={`cursor-pointer rounded-lg border p-4 ${formData.isPublic ? "border-[#F5A623]/40 bg-[#F7F8FA] dark:bg-[#2D3748]" : "border-[#EAECF0] bg-white dark:bg-[#1A1D27] dark:border-[#2D3748]"}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-md bg-white border border-[#EAECF0] dark:bg-[#1A1D27] dark:border-[#2D3748]">
+                      <Globe className="h-5 w-5 text-[#1C2333] dark:text-white" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-[#1C2333] dark:text-white">
+                        Pública
+                      </div>
+                      <div className="text-xs text-[#4B5563] dark:text-[#9CA3AF]">
+                        Cualquiera puede unirse con el código
+                      </div>
+                    </div>
+                  </div>
                   <input
                     type="radio"
+                    className="sr-only"
+                    name="visibility"
                     checked={formData.isPublic}
                     onChange={() =>
                       setFormData({ ...formData, isPublic: true })
                     }
-                    className="mr-2"
                   />
-                  Pública
                 </label>
-                <label className="flex items-center">
+
+                <label
+                  className={`cursor-pointer rounded-lg border p-4 ${!formData.isPublic ? "border-[#F5A623]/40 bg-[#F7F8FA] dark:bg-[#2D3748]" : "border-[#EAECF0] bg-white dark:bg-[#1A1D27] dark:border-[#2D3748]"}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-md bg-white border border-[#EAECF0] dark:bg-[#1A1D27] dark:border-[#2D3748]">
+                      <Lock className="h-5 w-5 text-[#1C2333] dark:text-white" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-[#1C2333] dark:text-white">
+                        Privada
+                      </div>
+                      <div className="text-xs text-[#4B5563] dark:text-[#9CA3AF]">
+                        Acceso solo mediante invitación
+                      </div>
+                    </div>
+                  </div>
                   <input
                     type="radio"
+                    className="sr-only"
+                    name="visibility"
                     checked={!formData.isPublic}
                     onChange={() =>
                       setFormData({ ...formData, isPublic: false })
                     }
-                    className="mr-2"
                   />
-                  Privada
                 </label>
               </div>
             </div>
 
-            {/* Límite de participantes */}
             <div>
               <label
                 htmlFor="maxMembers"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="block text-sm font-medium text-[#1C2333] dark:text-white mb-2"
               >
-                Máximo de participantes
+                Máximo de miembros
               </label>
               <input
                 id="maxMembers"
                 type="number"
-                min="2"
-                max="50"
+                min={2}
+                max={50}
                 value={formData.maxMembers}
                 onChange={(e) =>
                   setFormData({
@@ -175,24 +196,23 @@ export function CreateRoom() {
                     maxMembers: parseInt(e.target.value) || 10,
                   })
                 }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full rounded-lg border border-[#EAECF0] bg-white px-4 py-2 text-sm text-[#1C2333] placeholder:text-[#9CA3AF] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 dark:border-[#2D3748] dark:bg-[#1A1D27] dark:text-white"
               />
               {errors.maxMembers && (
                 <p className="mt-1 text-sm text-red-600">{errors.maxMembers}</p>
               )}
             </div>
 
-            {/* Botón de envío */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full rounded-lg bg-[#F5A623] py-3 text-sm font-semibold text-[#1C2333] transition-all duration-150 hover:bg-opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {loading ? "Creando..." : "Crear Sala"}
+              {loading ? "Creando..." : "Crear sala"}
             </button>
           </form>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

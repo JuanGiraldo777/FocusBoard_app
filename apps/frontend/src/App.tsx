@@ -1,21 +1,23 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext.tsx";
+import { Navigate, Route, Routes } from "react-router-dom";
+import { Layout } from "./components/Layout.tsx";
 import { ProtectedRoute } from "./components/ProtectedRoute.tsx";
 import { PublicRoute } from "./components/PublicRoute.tsx";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import { Dashboard } from "./pages/Dashboard";
-import Room from "./pages/Room";
-import { History } from "./pages/History";
-import { CreateRoom } from "./pages/CreateRoom";
-import { RoomList } from "./pages/RoomList";
-import { JoinRoom } from "./pages/JoinRoom";
+import { AuthProvider } from "./context/AuthContext.tsx";
+import { CreateRoom } from "./pages/CreateRoom.tsx";
+import { Dashboard } from "./pages/Dashboard.tsx";
+import { History } from "./pages/History.tsx";
+import { JoinRoom } from "./pages/JoinRoom.tsx";
+import Login from "./pages/Login.tsx";
+import Register from "./pages/Register.tsx";
+import Room from "./pages/Room.tsx";
+import { RoomList } from "./pages/RoomList.tsx";
 
 function App() {
   return (
     <AuthProvider>
       <Routes>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
         <Route
           path="/login"
           element={
@@ -32,27 +34,14 @@ function App() {
             </PublicRoute>
           }
         />
+
         <Route
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/history"
-          element={
-            <ProtectedRoute>
-              <History />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/create-room"
-          element={
-            <ProtectedRoute>
-              <CreateRoom />
+              <Layout>
+                <Dashboard />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -60,15 +49,19 @@ function App() {
           path="/rooms"
           element={
             <ProtectedRoute>
-              <RoomList />
+              <Layout>
+                <RoomList />
+              </Layout>
             </ProtectedRoute>
           }
         />
         <Route
-          path="/join"
+          path="/history"
           element={
             <ProtectedRoute>
-              <JoinRoom />
+              <Layout>
+                <History />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -76,10 +69,34 @@ function App() {
           path="/room/:code"
           element={
             <ProtectedRoute>
-              <Room />
+              <Layout>
+                <Room />
+              </Layout>
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/create-room"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <CreateRoom />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/join-room"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <JoinRoom />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="/join" element={<Navigate to="/join-room" replace />} />
       </Routes>
     </AuthProvider>
   );

@@ -1,12 +1,11 @@
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth.ts";
 import { TimerDisplay } from "../components/TimerDisplay.tsx";
 import { useEffect, useState } from "react";
 import { getTodaySessionsCount } from "../services/dashboard.service.ts";
+import { BarChart2, Users } from "lucide-react";
 
 export function Dashboard() {
-  const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [todayCount, setTodayCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
@@ -40,86 +39,194 @@ export function Dashboard() {
     };
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate("/login", { replace: true });
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
-  };
-
   const handleSessionSaved = () => {
     fetchTodayCount();
   };
 
+  const dailyGoal = 8;
+  const goalProgress = Math.min((todayCount / dailyGoal) * 100, 100);
+  const firstName = user?.fullName?.split(" ")[0] || "Usuario";
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Buenos días";
+    if (hour < 18) return "Buenas tardes";
+    return "Buenas noches";
+  };
+
+  const getFormattedDate = () => {
+    const now = new Date();
+    const days = [
+      "Lunes",
+      "Martes",
+      "Miércoles",
+      "Jueves",
+      "Viernes",
+      "Sábado",
+      "Domingo",
+    ];
+    const months = [
+      "enero",
+      "febrero",
+      "marzo",
+      "abril",
+      "mayo",
+      "junio",
+      "julio",
+      "agosto",
+      "septiembre",
+      "octubre",
+      "noviembre",
+      "diciembre",
+    ];
+    return `${days[now.getDay()]}, ${now.getDate()} de ${months[now.getMonth()]}`;
+  };
+
   return (
-    <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
-      <nav className="bg-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-indigo-600">FocusBoard</h1>
-          <div className="flex gap-4">
-            <button
-              onClick={() => navigate("/rooms")}
-              className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition"
-            >
-              Ver Salas
-            </button>
-            <button
-              onClick={() => navigate("/create-room")}
-              className="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition"
-            >
-              Crear Sala
-            </button>
-            <button
-              onClick={() => navigate("/history")}
-              className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition"
-            >
-              Ver Historial
-            </button>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
-            >
-              Cerrar Sesión
-            </button>
-          </div>
-        </div>
-      </nav>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="space-y-2">
+        <h1 className="text-2xl font-semibold text-[#1C2333] dark:text-white">
+          {getGreeting()}, {firstName}
+        </h1>
+        <p className="text-sm text-[#4B5563] dark:text-[#9CA3AF]">
+          {getFormattedDate()}
+        </p>
+        <p className="text-sm italic text-[#4B5563] dark:text-[#9CA3AF]">
+          ¿Qué vas a lograr hoy?
+        </p>
+      </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="bg-white rounded-lg shadow-md p-8 text-center">
-          <h2 className="text-3xl font-bold text-gray-800 mb-4">
-            ¡Bienvenido {user?.fullName || "a FocusBoard"}!
-          </h2>
-          <p className="text-gray-600 mb-6">
-            Sesión iniciada como:{" "}
-            <span className="font-semibold">{user?.email}</span>
-          </p>
-
-          {/* Timer Component */}
+      {/* Main Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Left Column: Timer Card */}
+        <div className="bg-white dark:bg-[#1A1D27] border border-[#EAECF0] dark:border-[#2D3748] rounded-xl p-6">
           <TimerDisplay
             focusDuration={25 * 60}
             breakDuration={5 * 60}
             onSessionSaved={handleSessionSaved}
           />
+        </div>
 
-          <div className="grid grid-cols-3 gap-4 mt-8">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">
-                {loading ? "..." : todayCount}
+        {/* Right Column */}
+        <div className="space-y-6">
+          {/* Progress Card */}
+          <div className="bg-white dark:bg-[#1A1D27] border border-[#EAECF0] dark:border-[#2D3748] rounded-xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <BarChart2 className="w-5 h-5 text-[#F5A623]" />
+              <h2 className="text-lg font-semibold text-[#1C2333] dark:text-white">
+                Progreso de hoy
+              </h2>
+            </div>
+
+            {/* Counter */}
+            <div className="mb-6">
+              <div className="flex items-baseline gap-2">
+                <span className="text-4xl font-bold text-[#F5A623]">
+                  {loading ? "..." : todayCount}
+                </span>
+                <span className="text-lg text-[#4B5563] dark:text-[#9CA3AF]">
+                  / {dailyGoal}
+                </span>
               </div>
-              <p className="text-gray-600">Pomodoros Hoy</p>
+              <p className="text-sm text-[#4B5563] dark:text-[#9CA3AF] mt-2">
+                objetivo diario
+              </p>
             </div>
-            <div className="bg-green-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">0</div>
-              <p className="text-gray-600">Completadas</p>
+
+            {/* Progress Bar */}
+            <div className="mb-6">
+              <div className="h-2 bg-[#EAECF0] dark:bg-[#2D3748] rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[#F5A623] transition-all duration-300"
+                  style={{ width: `${goalProgress}%` }}
+                />
+              </div>
             </div>
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">0</div>
-              <p className="text-gray-600">En Progreso</p>
+
+            {/* Recent Sessions */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-[#4B5563] dark:text-[#9CA3AF] uppercase tracking-wide">
+                Últimas sesiones
+              </p>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {loading ? (
+                  <p className="text-sm text-[#4B5563] dark:text-[#9CA3AF]">
+                    Cargando...
+                  </p>
+                ) : todayCount === 0 ? (
+                  <p className="text-sm text-[#4B5563] dark:text-[#9CA3AF]">
+                    Aún no hay sesiones hoy
+                  </p>
+                ) : (
+                  Array.from({ length: Math.min(3, todayCount) }).map(
+                    (_, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between py-2 border-b border-[#EAECF0] dark:border-[#2D3748] last:border-0"
+                      >
+                        <div>
+                          <p className="text-sm text-[#1C2333] dark:text-white">
+                            Sesión {i + 1}
+                          </p>
+                          <p className="text-xs text-[#4B5563] dark:text-[#9CA3AF]">
+                            {new Date(
+                              Date.now() - i * 3600000,
+                            ).toLocaleTimeString("es-ES", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
+                        </div>
+                        <span className="text-sm font-medium text-[#F5A623]">
+                          25 min
+                        </span>
+                      </div>
+                    ),
+                  )
+                )}
+              </div>
             </div>
           </div>
+
+          {/* Active Room Card (placeholder) */}
+          <div className="bg-white dark:bg-[#1A1D27] border border-[#EAECF0] dark:border-[#2D3748] rounded-xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Users className="w-5 h-5 text-[#F5A623]" />
+              <h2 className="text-lg font-semibold text-[#1C2333] dark:text-white">
+                Sala activa
+              </h2>
+            </div>
+            <p className="text-sm text-[#4B5563] dark:text-[#9CA3AF]">
+              No estás en ninguna sala en este momento
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats Footer */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-white dark:bg-[#1A1D27] border border-[#EAECF0] dark:border-[#2D3748] rounded-xl p-6 text-center">
+          <div className="text-3xl font-bold text-[#F5A623] mb-2">
+            {loading ? "..." : todayCount}
+          </div>
+          <p className="text-xs text-[#4B5563] dark:text-[#9CA3AF] uppercase tracking-wide">
+            Pomodoros hoy
+          </p>
+        </div>
+        <div className="bg-white dark:bg-[#1A1D27] border border-[#EAECF0] dark:border-[#2D3748] rounded-xl p-6 text-center">
+          <div className="text-3xl font-bold text-[#F5A623] mb-2">
+            {loading ? "..." : `${todayCount * 25}`} min
+          </div>
+          <p className="text-xs text-[#4B5563] dark:text-[#9CA3AF] uppercase tracking-wide">
+            Tiempo enfocado
+          </p>
+        </div>
+        <div className="bg-white dark:bg-[#1A1D27] border border-[#EAECF0] dark:border-[#2D3748] rounded-xl p-6 text-center">
+          <div className="text-3xl font-bold text-[#F5A623] mb-2">0</div>
+          <p className="text-xs text-[#4B5563] dark:text-[#9CA3AF] uppercase tracking-wide">
+            Racha actual
+          </p>
         </div>
       </div>
     </div>

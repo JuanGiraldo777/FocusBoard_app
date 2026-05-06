@@ -18,7 +18,7 @@ Estudiantes, developers junior en practicas, o cualquier persona que trabaja en 
 | 4   | Salas compartidas        | Crear o unirse a salas con otros usuarios.           |
 | 5   | Presencia en tiempo real | Ver quien esta trabajando en tu sala (WebSockets).   |
 | 6   | Historial de sesiones    | Cuantos pomodoros completaste hoy y esta semana.     |
-| 7   | Panel de audio personal  | Spotify, YouTube Lofi o sonidos ambiente.            |
+| 7   | Panel de audio personal  | Sonidos ambiente.            |
 
 ## Funcionalidades opcionales
 

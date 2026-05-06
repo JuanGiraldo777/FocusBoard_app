@@ -1,16 +1,27 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useSocket } from "../hooks/useSocket.ts";
 import { roomService } from "../services/room.service.ts";
 import type { RoomData } from "../services/room.service.ts";
+import {
+  Users,
+  Copy,
+  LogOut,
+  Target,
+  Coffee,
+  Music,
+  ChevronDown,
+} from "lucide-react";
+import { TimerDisplay } from "../components/TimerDisplay.tsx";
+import { AmbientSoundControls } from "../components/AmbientSoundControls.tsx";
 
 export function Room() {
   const { code } = useParams();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
-  const { members, isConnected, roomDeleted } = useSocket(code || "");
+  const { members, roomDeleted } = useSocket(code || "");
   const [room, setRoom] = useState<RoomData | null>(null);
   const [loadingRoom, setLoadingRoom] = useState(true);
   const [roomError, setRoomError] = useState<string | null>(null);
@@ -18,11 +29,6 @@ export function Room() {
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<"leave" | "delete" | null>(
     null,
-  );
-
-  const isOwner = useMemo(
-    () => Boolean(room && user && room.owner_id === user.id),
-    [room, user],
   );
 
   const roomTitle = room?.name || (code ? `Sala ${code}` : "Sala");
@@ -114,55 +120,21 @@ export function Room() {
     }
   };
 
-  const handleDeleteRoom = async () => {
-    if (!room) {
-      setActionError("Sala no cargada");
-      return;
-    }
+  // UI state for collapsible audio panel
+  const [audioOpen, setAudioOpen] = useState(false);
 
-    const confirmed = window.confirm(
-      "Esta acción eliminará la sala permanentemente. ¿Deseas continuar?",
-    );
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      setActionLoading("delete");
-      setActionError(null);
-      setActionSuccess(null);
-
-      await roomService.deleteRoom(room.id);
-
-      setActionSuccess("Sala eliminada exitosamente");
-      navigate("/dashboard", { replace: true });
-    } catch (error) {
-      console.error("Error deleting room:", error);
-      setActionError("No se pudo eliminar la sala");
-    } finally {
-      setActionLoading(null);
-    }
+  // Extended member type for optional fields coming from socket
+  type ExtendedMember = (typeof members)[number] & {
+    name?: string;
+    timeLeft?: number;
   };
 
   if (loadingRoom) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
-        <nav className="bg-white shadow-md">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-indigo-600">FocusBoard</h1>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
-            >
-              Cerrar Sesión
-            </button>
-          </div>
-        </nav>
+      <div className="min-h-screen bg-[#F7F8FA] dark:bg-[#1A1D27]">
         <div className="max-w-7xl mx-auto px-4 py-12">
-          <div className="text-center py-12">
-            <div className="animate-pulse space-y-4">
-              <div className="h-32 bg-gray-200 rounded-lg"></div>
-            </div>
+          <div className="animate-pulse space-y-4">
+            <div className="h-32 bg-[#F7F8FA] dark:bg-[#2D3748] rounded-lg"></div>
           </div>
         </div>
       </div>
@@ -171,172 +143,223 @@ export function Room() {
 
   if (roomError) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
-        <nav className="bg-white shadow-md">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-indigo-600">FocusBoard</h1>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
-            >
-              Cerrar Sesión
-            </button>
-          </div>
-        </nav>
-        <div className="max-w-7xl mx-auto px-4 py-12">
-          <div className="bg-white rounded-lg shadow-md p-8 text-center">
-            <p className="text-red-600 mb-4">{roomError}</p>
-            <button
-              onClick={() => navigate("/dashboard")}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
-            >
-              Volver al dashboard
-            </button>
-          </div>
+      <div className="min-h-screen bg-[#F7F8FA] dark:bg-[#1A1D27] flex items-center justify-center p-6">
+        <div className="w-full max-w-md rounded-xl border border-[#EAECF0] dark:border-[#2D3748] bg-white dark:bg-[#1A1D27] p-8 shadow-sm text-center">
+          <p className="text-red-600 mb-4">{roomError}</p>
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="px-4 py-2 bg-[#F5A623] text-[#1C2333] font-semibold rounded-lg hover:bg-opacity-90 transition"
+          >
+            Volver al dashboard
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
-      <nav className="bg-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-indigo-600">FocusBoard</h1>
-          <div className="flex gap-4">
-            <div className="px-4 py-2 bg-gray-100 rounded-lg">
-              <span className="text-sm text-gray-600">Código: </span>
-              <span className="font-mono font-bold">{code}</span>
-              <button
-                onClick={copyCode}
-                className="ml-2 text-indigo-600 hover:text-indigo-800 text-sm"
-              >
-                Copiar
-              </button>
+    <div className="min-h-screen bg-[#F7F8FA] dark:bg-[#1A1D27]">
+      <header className="border-b border-[#EAECF0] dark:border-[#2D3748] bg-white dark:bg-[#1A1D27]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-xl font-semibold text-[#1C2333] dark:text-white">
+                {roomTitle}
+              </h1>
+              <div className="mt-1 flex items-center gap-3">
+                <div className="inline-flex items-center gap-2 bg-[#F7F8FA] dark:bg-[#1A1D27] border border-[#EAECF0] dark:border-[#2D3748] px-2 py-1 rounded text-sm font-mono text-[#1C2333] dark:text-white">
+                  <span className="text-xs">{code}</span>
+                  <button
+                    onClick={copyCode}
+                    className="ml-1 text-[#1C2333] dark:text-white hover:opacity-80"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <div className="inline-flex items-center gap-2 px-2 py-1 rounded bg-white dark:bg-[#17202a] border border-[#EAECF0] dark:border-[#2D3748] text-sm">
+                  <Users className="h-4 w-4 text-[#1C2333] dark:text-white" />
+                  <span className="text-sm text-[#4B5563] dark:text-[#9CA3AF]">
+                    {members.length} miembros activos
+                  </span>
+                </div>
+              </div>
             </div>
-            <div
-              className={`px-4 py-2 rounded-lg ${isConnected ? "bg-green-50" : "bg-red-50"}`}
-            >
-              <span className="text-sm">
-                {isConnected ? "Conectado" : "Desconectado"}
-              </span>
-            </div>
-            <div className="px-4 py-2 bg-indigo-50 rounded-lg">
-              <span className="text-sm text-indigo-700">
-                Miembros activos: {members.length}
-              </span>
-            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
             <button
-              onClick={handleLeaveRoom}
+              onClick={() => {
+                const confirmed = window.confirm("¿Salir de la sala?");
+                if (confirmed) handleLeaveRoom();
+              }}
               disabled={actionLoading !== null}
-              className="px-4 py-2 bg-amber-100 text-amber-800 rounded-lg hover:bg-amber-200 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm text-[#1C2333] dark:text-white bg-transparent border border-[#EAECF0] dark:border-[#2D3748] hover:bg-[#F7F8FA] dark:hover:bg-[#131417] disabled:opacity-50"
             >
-              {actionLoading === "leave" ? "Saliendo..." : "Salir de Sala"}
+              <LogOut className="h-4 w-4" />
+              Salir de la sala
             </button>
-            {isOwner && (
-              <button
-                onClick={handleDeleteRoom}
-                disabled={actionLoading !== null}
-                className="px-4 py-2 bg-red-100 text-red-800 rounded-lg hover:bg-red-200 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {actionLoading === "delete" ? "Eliminando..." : "Eliminar Sala"}
-              </button>
-            )}
+
             <button
               onClick={handleLogout}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm bg-transparent text-[#1C2333] dark:text-white border border-[#EAECF0] dark:border-[#2D3748] hover:bg-[#F7F8FA] dark:hover:bg-[#131417]"
             >
-              Cerrar Sesión
+              Cerrar sesión
             </button>
           </div>
         </div>
-      </nav>
+      </header>
 
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="bg-white rounded-lg shadow-md p-8">
+      <main className="max-w-7xl mx-auto px-4 py-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Miembros */}
+        <section className="lg:col-span-2 space-y-6">
           {actionError && (
-            <div className="mb-4 p-4 rounded-lg bg-red-50 text-red-700 border border-red-200">
+            <div className="rounded-lg p-4 bg-red-50 text-red-700 border border-red-200">
               {actionError}
             </div>
           )}
 
           {actionSuccess && (
-            <div className="mb-4 p-4 rounded-lg bg-green-50 text-green-700 border border-green-200">
+            <div className="rounded-lg p-4 bg-green-50 text-green-700 border border-green-200">
               {actionSuccess}
             </div>
           )}
 
-          <h2 className="text-3xl font-bold text-gray-800 mb-6">{roomTitle}</h2>
-
-          {!isConnected && (
-            <div className="mb-4 p-4 rounded-lg bg-amber-50 text-amber-700 border border-amber-200">
-              Conexión en tiempo real inactiva. Intentando reconectar...
-            </div>
-          )}
-
-          {/* Lista de miembros */}
-          <div className="space-y-4">
-            <h3 className="text-xl font-semibold text-gray-700 mb-4">
-              Miembros en línea ({members.length})
+          <div>
+            <h3 className="text-sm font-medium text-[#4B5563] dark:text-[#9CA3AF]">
+              En la sala ahora
             </h3>
-
             {members.length === 0 ? (
-              <p className="text-gray-500 italic">No hay miembros en línea</p>
+              <p className="mt-3 text-sm text-[#4B5563] dark:text-[#9CA3AF]">
+                No hay miembros en la sala
+              </p>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {members.map((member) => (
-                  <div
-                    key={member.socketId}
-                    className={`p-4 rounded-lg border-l-4 ${
-                      member.status === "focusing"
-                        ? "border-red-500 bg-red-50"
-                        : member.status === "break"
-                          ? "border-green-500 bg-green-50"
-                          : "border-gray-300 bg-gray-50"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-semibold text-gray-800">
-                          Usuario #{member.userId}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Estado:{" "}
-                          <span
-                            className={`font-medium ${
-                              member.status === "focusing"
-                                ? "text-red-600"
-                                : member.status === "break"
-                                  ? "text-green-600"
-                                  : "text-gray-600"
-                            }`}
-                          >
-                            {member.status === "focusing"
-                              ? "Enfoque"
-                              : member.status === "break"
-                                ? "Descanso"
-                                : "Inactivo"}
-                          </span>
-                        </p>
+              <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 gap-4">
+                {(members as ExtendedMember[]).map((member) => {
+                  const isYou = member.userId === user?.id;
+                  const displayName = isYou
+                    ? (user?.fullName ?? `U${member.userId}`)
+                    : `Usuario ${member.userId}`;
+                  const initials = String(displayName)
+                    .split(" ")
+                    .map((p: string) => p[0])
+                    .slice(0, 2)
+                    .join("")
+                    .toUpperCase();
+
+                  return (
+                    <div
+                      key={member.socketId}
+                      className="flex flex-col items-center gap-2 p-4 rounded-xl bg-white dark:bg-[#1A1D27] border border-[#EAECF0] dark:border-[#2D3748]"
+                    >
+                      <div
+                        className={`h-12 w-12 rounded-full flex items-center justify-center text-sm font-semibold ${isYou ? "bg-[#F5A623] text-[#1C2333]" : "bg-[#F7F8FA] dark:bg-[#2D3748] text-[#1C2333] dark:text-white"}`}
+                      >
+                        {initials}
                       </div>
-                      {member.userId === user?.id && (
-                        <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded">
-                          Tú
-                        </span>
-                      )}
+                      <div className="text-sm font-medium text-[#1C2333] dark:text-white">
+                        {displayName}
+                      </div>
+
+                      <div className="mt-1">
+                        {member.status === "focusing" ? (
+                          <div className="inline-flex items-center gap-2 px-2 py-1 rounded-full bg-amber-100 text-amber-800 text-xs">
+                            <Target className="h-3 w-3" />
+                            <span>Enfocado</span>
+                          </div>
+                        ) : member.status === "break" ? (
+                          <div className="inline-flex items-center gap-2 px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs">
+                            <Coffee className="h-3 w-3" />
+                            <span>Descanso</span>
+                          </div>
+                        ) : (
+                          <div className="inline-flex items-center gap-2 px-2 py-1 rounded-full bg-gray-100 text-gray-500 text-xs">
+                            <span>Inactivo</span>
+                          </div>
+                        )}
+
+                        {"timeLeft" in member &&
+                          typeof (member as any).timeLeft === "number" && (
+                            <div className="mt-2 text-xs text-[#4B5563] dark:text-[#9CA3AF]">
+                              {Math.floor((member as any).timeLeft / 60)}:
+                              {String((member as any).timeLeft % 60).padStart(
+                                2,
+                                "0",
+                              )}
+                            </div>
+                          )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
+        </section>
 
-          {/* TODO: Timer de Pomodoro */}
-          <div className="mt-8 p-6 bg-gray-50 rounded-lg text-center">
-            <p className="text-gray-500">Timer de Pomodoro próximamente...</p>
+        {/* Tu sesión (card destacada) */}
+        <aside className="space-y-6">
+          <div className="rounded-xl border-2 border-[#F5A623] p-6 bg-white dark:bg-[#1A1D27]">
+            <div className="flex items-center justify-between">
+              <h4 className="text-lg font-semibold text-[#1C2333] dark:text-white">
+                Tu sesión
+              </h4>
+              <div className="text-sm text-[#4B5563] dark:text-[#9CA3AF]">
+                {user?.fullName ?? ""}
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <TimerDisplay />
+            </div>
+
+            <div className="mt-4 text-sm italic text-[#4B5563] dark:text-[#9CA3AF]">
+              {/* If task declared, TimerDisplay shows it; otherwise user can declare desde el modal */}
+            </div>
+            <div className="mt-4 text-sm text-[#4B5563] dark:text-[#9CA3AF]">
+              Progreso:{" "}
+              <span className="font-semibold text-[#F5A623]">
+                {/* placeholder */}0
+              </span>{" "}
+              sesiones completadas
+            </div>
           </div>
-        </div>
-      </div>
+
+          {/* Panel Audio colapsable */}
+          <div className="rounded-xl border border-[#EAECF0] dark:border-[#2D3748] bg-white dark:bg-[#1A1D27]">
+            <button
+              onClick={() => setAudioOpen((s) => !s)}
+              className="w-full flex items-center justify-between px-4 py-3 text-left"
+            >
+              <div className="flex items-center gap-3">
+                <Music className="h-5 w-5 text-[#1C2333] dark:text-white" />
+                <span className="font-medium text-[#1C2333] dark:text-white">
+                  Audio ambiente
+                </span>
+              </div>
+              <ChevronDown
+                className={`h-5 w-5 text-[#1C2333] dark:text-white ${audioOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+
+            {audioOpen && (
+              <div className="px-4 pb-4">
+                <AmbientSoundControls
+                  options={[]}
+                  selectedSoundId={"rain" as any}
+                  selectedSoundLabel={"--"}
+                  selectedSoundDescription={""}
+                  volume={0}
+                  status={"idle" as any}
+                  error={null}
+                  onSelectSound={() => {}}
+                  onVolumeChange={() => {}}
+                />
+              </div>
+            )}
+          </div>
+        </aside>
+      </main>
     </div>
   );
 }

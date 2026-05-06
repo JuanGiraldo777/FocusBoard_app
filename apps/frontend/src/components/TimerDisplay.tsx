@@ -145,10 +145,10 @@ export function TimerDisplay({
   const strokeDashoffset = CIRCUMFERENCE * (1 - progress);
   const strokeColor =
     timer.state === "focusing"
-      ? "#4f46e5"
+      ? "#F5A623"
       : timer.state === "break"
-        ? "#10b981"
-        : "#6b7280";
+        ? "#3B82F6"
+        : "#9CA3AF";
 
   const stateTextMap: Record<string, string> = {
     idle: "Listo para comenzar",
@@ -158,67 +158,94 @@ export function TimerDisplay({
   };
   const stateText = stateTextMap[timer.state] || "Desconocido";
 
+  const stateColors: Record<string, string> = {
+    idle: "bg-gray-100 text-[#4B5563] dark:bg-[#2D3748] dark:text-[#9CA3AF]",
+    focusing:
+      "bg-amber-100 text-[#F5A623] dark:bg-amber-900/20 dark:text-[#F5A623]",
+    break: "bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400",
+    paused:
+      "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400",
+  };
+
   return (
-    <div className="max-w-md mx-auto bg-linear-to-br from-indigo-50 to-blue-50 rounded-lg p-6 shadow-md">
+    <div className="space-y-6">
+      {/* Tarea actual */}
       {currentTask &&
         (timer.state === "focusing" || timer.state === "paused") && (
-          <div className="bg-white rounded-lg p-4 mb-6 shadow-sm border-l-4 border-indigo-500">
-            <p className="text-sm text-gray-500 mb-1">Tarea actual:</p>
-            <p className="text-lg font-semibold text-gray-800">{currentTask}</p>
+          <div className="bg-[#F7F8FA] dark:bg-[#2D3748] rounded-lg p-4 border-l-2 border-[#F5A623]">
+            <p className="text-xs font-semibold text-[#4B5563] dark:text-[#9CA3AF] uppercase tracking-wide mb-1">
+              Tarea actual
+            </p>
+            <p className="text-lg font-semibold text-[#1C2333] dark:text-white break-words">
+              {currentTask}
+            </p>
           </div>
         )}
 
-      <div className="relative w-64 h-64 mx-auto mb-6">
-        <svg
-          viewBox="0 0 200 200"
-          className="w-full h-full"
-          aria-label={`Progreso: ${Math.round(progress * 100)}%`}
+      {/* Badge Estado */}
+      <div className="flex justify-center">
+        <span
+          className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${stateColors[timer.state]}`}
         >
-          <circle
-            cx="100"
-            cy="100"
-            r="90"
-            fill="none"
-            stroke="#e0e0e0"
-            strokeWidth="10"
-          />
-          <circle
-            cx="100"
-            cy="100"
-            r="90"
-            fill="none"
-            stroke={strokeColor}
-            strokeWidth="10"
-            strokeLinecap="round"
-            strokeDasharray={CIRCUMFERENCE}
-            strokeDashoffset={strokeDashoffset}
-            transform="rotate(-90 100 100)"
-          />
-          <text
-            x="100"
-            y="110"
-            textAnchor="middle"
-            fontSize="28"
-            fontWeight="bold"
-            fill="#1f2937"
-            aria-label={`Tiempo restante: ${Math.floor(timer.timeLeft / 60)} minutos y ${timer.timeLeft % 60} segundos`}
-          >
-            {`${String(Math.floor(timer.timeLeft / 60)).padStart(2, "0")}:${String(timer.timeLeft % 60).padStart(2, "0")}`}
-          </text>
-        </svg>
+          {stateText}
+        </span>
       </div>
 
-      <p
-        className="text-center text-gray-600 mb-4 capitalize"
-        aria-label={`Estado actual: ${stateText}`}
-      >
-        {stateText}
+      {/* Timer Display - SVG Circular */}
+      <div className="flex justify-center">
+        <div className="relative w-64 h-64">
+          <svg
+            viewBox="0 0 200 200"
+            className="w-full h-full"
+            aria-label={`Progreso: ${Math.round(progress * 100)}%`}
+          >
+            <circle
+              cx="100"
+              cy="100"
+              r="90"
+              fill="none"
+              stroke="#EAECF0"
+              className="dark:stroke-[#2D3748]"
+              strokeWidth="8"
+            />
+            <circle
+              cx="100"
+              cy="100"
+              r="90"
+              fill="none"
+              stroke={strokeColor}
+              strokeWidth="8"
+              strokeLinecap="round"
+              strokeDasharray={CIRCUMFERENCE}
+              strokeDashoffset={strokeDashoffset}
+              transform="rotate(-90 100 100)"
+              className="transition-all duration-300"
+            />
+            <text
+              x="100"
+              y="110"
+              textAnchor="middle"
+              fontSize="48"
+              fontWeight="bold"
+              fill="#1C2333"
+              className="dark:fill-white"
+              aria-label={`Tiempo restante: ${Math.floor(timer.timeLeft / 60)} minutos y ${timer.timeLeft % 60} segundos`}
+            >
+              {`${String(Math.floor(timer.timeLeft / 60)).padStart(2, "0")}:${String(timer.timeLeft % 60).padStart(2, "0")}`}
+            </text>
+          </svg>
+        </div>
+      </div>
+
+      {/* Contador de sesiones */}
+      <p className="text-center text-sm text-[#4B5563] dark:text-[#9CA3AF]">
+        <span className="font-semibold text-[#F5A623]">
+          {timer.sessionsCompleted}
+        </span>{" "}
+        sesiones completadas hoy
       </p>
 
-      <p className="text-center text-gray-600 mb-6">
-        Sesiones completadas: {timer.sessionsCompleted}
-      </p>
-
+      {/* Controles de audio ambiente */}
       <AmbientSoundControls
         options={ambientAudio.options}
         selectedSoundId={ambientAudio.selectedSoundId}
@@ -231,62 +258,63 @@ export function TimerDisplay({
         onVolumeChange={ambientAudio.setVolume}
       />
 
-      <div className="flex flex-wrap gap-3 justify-center mt-6">
+      {/* Botones de acción */}
+      <div className="flex flex-col gap-3">
         {timer.state === "idle" && (
           <button
             onClick={handleStartClick}
-            className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition w-full sm:w-auto"
+            className="px-6 py-2 bg-[#F5A623] text-[#1C2333] font-semibold rounded-lg hover:bg-opacity-90 transition-all duration-150 w-full"
             aria-label="Iniciar temporizador"
           >
-            Comenzar
+            Iniciar
           </button>
         )}
 
         {timer.state === "focusing" && (
-          <>
+          <div className="flex gap-2">
             <button
               onClick={timer.pause}
-              className="px-6 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition w-full sm:w-auto"
+              className="flex-1 px-6 py-2 bg-[#F7F8FA] dark:bg-[#2D3748] text-[#1C2333] dark:text-white font-semibold rounded-lg hover:bg-opacity-80 transition-all duration-150"
               aria-label="Pausar temporizador"
             >
               Pausar
             </button>
             <button
               onClick={timer.reset}
-              className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition w-full sm:w-auto"
+              className="flex-1 px-6 py-2 bg-[#F7F8FA] dark:bg-[#2D3748] text-[#1C2333] dark:text-white font-semibold rounded-lg hover:bg-opacity-80 transition-all duration-150"
               aria-label="Reiniciar temporizador"
             >
               Reiniciar
             </button>
-          </>
+          </div>
         )}
 
         {timer.state === "paused" && (
-          <>
+          <div className="flex gap-2">
             <button
               onClick={timer.resume}
-              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition w-full sm:w-auto"
+              className="flex-1 px-6 py-2 bg-[#F5A623] text-[#1C2333] font-semibold rounded-lg hover:bg-opacity-90 transition-all duration-150"
               aria-label="Reanudar temporizador"
             >
               Reanudar
             </button>
             <button
               onClick={timer.reset}
-              className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition w-full sm:w-auto"
+              className="flex-1 px-6 py-2 bg-[#F7F8FA] dark:bg-[#2D3748] text-[#1C2333] dark:text-white font-semibold rounded-lg hover:bg-opacity-80 transition-all duration-150"
               aria-label="Reiniciar temporizador"
             >
               Reiniciar
             </button>
-          </>
+          </div>
         )}
 
         {timer.state === "break" && (
           <button
             onClick={timer.reset}
-            className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition w-full sm:w-auto"
+            className="px-6 py-2 bg-[#F5A623] text-[#1C2333] font-semibold rounded-lg hover:bg-opacity-90 transition-all duration-150 w-full"
             aria-label="Siguiente sesión"
           >
-            Siguiente Sesión
+            Siguiente sesión
           </button>
         )}
       </div>
