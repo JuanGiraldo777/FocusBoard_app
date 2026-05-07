@@ -27,6 +27,11 @@ export interface RawDeletedRoom {
   code: string;
 }
 
+/**
+ * Convierte un RawRoom de la BD al formato de la aplicación
+ * @param raw - Objeto RawRoom de la base de datos
+ * @returns Objeto Room con las propiedades mapeadas
+ */
 export function mapRawRoomToRoom(raw: RawRoom) {
   return {
     id: raw.id,
@@ -40,6 +45,11 @@ export function mapRawRoomToRoom(raw: RawRoom) {
   };
 }
 
+/**
+ * Convierte un RawRoomListItem de la BD al formato de la aplicación
+ * @param raw - Objeto RawRoomListItem de la base de datos
+ * @returns Objeto RoomListItem con las propiedades mapeadas
+ */
 export function mapRawRoomToRoomListItem(raw: RawRoomListItem) {
   return {
     id: raw.id,
@@ -52,11 +62,24 @@ export function mapRawRoomToRoomListItem(raw: RawRoomListItem) {
   };
 }
 
+/**
+ * Repositorio de salas — todas las operaciones de BD relacionadas con rooms
+ * Usa transacciones para operaciones que modifican multiples tablas
+ */
 const roomRepository = {
+  /**
+   * Obtiene un cliente del pool para usar en transacciones
+   * @returns Cliente de PostgreSQL para transacciones BEGIN/COMMIT/ROLLBACK
+   */
   getClient() {
     return db.getClient();
   },
 
+  /**
+   * Verifica si un código de sala ya existe en la base de datos
+   * @param code - Código de 8 caracteres a verificar
+   * @returns true si el código ya está en uso, false si está disponible
+   */
   async codeExists(code: string): Promise<boolean> {
     const result = await db.query(
       "SELECT 1 FROM rooms WHERE code = $1 LIMIT 1",
@@ -65,6 +88,16 @@ const roomRepository = {
     return result.rows.length > 0;
   },
 
+  /**
+   * Crea una nueva sala en la base de datos
+   * @param client - Cliente de transacción de PostgreSQL
+   * @param name - Nombre de la sala
+   * @param code - Código único de 8 caracteres
+   * @param isPublic - Si la sala es pública o privada
+   * @param maxMembers - Máximo de miembros permitidos
+   * @param ownerId - ID del usuario propietario
+   * @returns RawRoom recién creado con todos sus campos
+   */
   async createRoom(
     client: PoolClient,
     name: string,
@@ -82,6 +115,12 @@ const roomRepository = {
     return result.rows[0];
   },
 
+  /**
+   * Agrega un miembro a una sala (INSERT con ON CONFLICT DO NOTHING)
+   * @param client - Cliente de transacción
+   * @param roomId - ID de la sala
+   * @param userId - ID del usuario a agregar
+   */
   async addMember(
     client: PoolClient,
     roomId: number,
@@ -95,6 +134,11 @@ const roomRepository = {
     );
   },
 
+  /**
+   * Busca una sala por su código único
+   * @param code - Código de la sala (8 caracteres)
+   * @returns RawRoom o null si no existe
+   */
   async findByCode(code: string): Promise<RawRoom | null> {
     const result = await db.query(
       "SELECT * FROM rooms WHERE code = $1 LIMIT 1",
@@ -103,6 +147,14 @@ const roomRepository = {
     return result.rows[0] || null;
   },
 
+  /**
+   * Lista salas públicas con búsqueda opcional y paginación
+   * Hace JOIN con room_members para obtener member_count
+   * @param search - Término de búsqueda por nombre (opcional)
+   * @param limit - Máximo de resultados (default 20)
+   * @param offset - Desplazamiento para paginación (default 0)
+   * @returns Array de RawRoomListItem con member_count incluido
+   */
   async listPublicRooms(
     search?: string,
     limit: number = 20,
@@ -132,6 +184,11 @@ const roomRepository = {
     return result.rows;
   },
 
+  /**
+   * Busca una sala por su ID interno
+   * @param roomId - ID de la sala
+   * @returns RawRoom o null si no existe
+   */
   async findById(roomId: number): Promise<RawRoom | null> {
     const result = await db.query("SELECT * FROM rooms WHERE id = $1 LIMIT 1", [
       roomId,
@@ -139,6 +196,11 @@ const roomRepository = {
     return result.rows[0] || null;
   },
 
+  /**
+   * Cuenta el número total de miembros en una sala
+   * @param roomId - ID de la sala
+   * @returns Número de miembros en la sala
+   */
   async countMembers(roomId: number): Promise<number> {
     const result = await db.query(
       "SELECT COUNT(*) as count FROM room_members WHERE room_id = $1",
@@ -147,6 +209,12 @@ const roomRepository = {
     return parseInt(result.rows[0].count, 10);
   },
 
+  /**
+   * Verifica si un usuario ya es miembro de una sala
+   * @param roomId - ID de la sala
+   * @param userId - ID del usuario
+   * @returns true si el usuario ya es miembro, false si no
+   */
   async isMember(roomId: number, userId: number): Promise<boolean> {
     const result = await db.query(
       "SELECT 1 FROM room_members WHERE room_id = $1 AND user_id = $2 LIMIT 1",
@@ -155,6 +223,12 @@ const roomRepository = {
     return result.rows.length > 0;
   },
 
+  /**
+   * Agrega miembro a sala dentro de una transacción (sin ON CONFLICT)
+   * @param client - Cliente de transacción
+   * @param roomId - ID de la sala
+   * @param userId - ID del usuario
+   */
   async addMemberTransactional(
     client: PoolClient,
     roomId: number,
@@ -167,6 +241,11 @@ const roomRepository = {
     );
   },
 
+  /**
+   * Actualiza last_activity de una sala al momento actual
+   * @param roomId - ID de la sala
+   * @param client - Cliente opcional (transacción) o usa db por defecto
+   */
   async updateLastActivity(
     roomId: number,
     client?: PoolClient,
@@ -177,6 +256,13 @@ const roomRepository = {
     ]);
   },
 
+  /**
+   * Elimina un miembro de una sala
+   * @param client - Cliente de transacción
+   * @param roomId - ID de la sala
+   * @param userId - ID del usuario a remover
+   * @returns Número de filas eliminadas (0 o 1)
+   */
   async removeMember(
     client: PoolClient,
     roomId: number,
@@ -190,6 +276,12 @@ const roomRepository = {
     return result.rowCount ?? 0;
   },
 
+  /**
+   * Elimina una sala por su ID (room_members se elimina por CASCADE)
+   * @param client - Cliente de transacción
+   * @param roomId - ID de la sala a eliminar
+   * @returns Número de filas eliminadas (0 o 1)
+   */
   async deleteRoomById(client: PoolClient, roomId: number): Promise<number> {
     const result = await client.query("DELETE FROM rooms WHERE id = $1", [
       roomId,
@@ -197,6 +289,11 @@ const roomRepository = {
     return result.rowCount ?? 0;
   },
 
+  /**
+   * Elimina salas inactivas (last_activity < hace 24 horas)
+   * Usado por el cron job para limpieza automática
+   * @returns Array de RawDeletedRoom con id y code de salas eliminadas
+   */
   async deleteInactiveRooms(): Promise<RawDeletedRoom[]> {
     const result = await db.query(
       `DELETE FROM rooms

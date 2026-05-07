@@ -16,6 +16,13 @@ export interface AuthTokens {
   refreshToken: string;
 }
 
+/**
+ * Genera access y refresh tokens JWT para un usuario
+ * Access token expira en 15m, refresh en 7d
+ * @param userId - ID del usuario para el claims sub
+ * @param email - Email del usuario para el claims
+ * @returns Objeto con accessToken, refreshToken y refreshTokenJti (UUID para revocación)
+ */
 const generateTokens = (
   userId: number,
   email: string,
@@ -38,6 +45,14 @@ const generateTokens = (
 };
 
 export const authService = {
+  /**
+   * Registra un nuevo usuario con email, password y nombre
+   * Hashea password con bcrypt cost 12 por seguridad en producción
+   * Crea user + settings en transacción atómica via userRepository
+   * @param data - Datos de registro (email, password, fullName)
+   * @returns AuthTokens (access y refresh tokens)
+   * @throws Error 409 si el email ya está registrado
+   */
   register: async (data: RegisterData): Promise<AuthTokens> => {
     const existing = await userRepository.findByEmail(data.email);
     if (existing) {
@@ -54,6 +69,18 @@ export const authService = {
     return generateTokens(user.id, user.email);
   },
 
+  /**
+   * Autentica un usuario con email y password
+   * Compara password con bcrypt.compare y valida que la cuenta esté activa
+   * Genera tokens y guarda refresh token hasheado en BD con jti para revocación
+   * @param email - Email del usuario
+   * @param password - Password en texto plano
+   * @param ipAddress - IP del cliente (opcional, para auditoría)
+   * @param userAgent - User-Agent del cliente (opcional, para auditoría)
+   * @returns AuthTokens (access y refresh tokens)
+   * @throws Error 401 si credenciales inválidas
+   * @throws Error 403 si la cuenta está desactivada
+   */
   login: async (
     email: string,
     password: string,
@@ -94,6 +121,13 @@ export const authService = {
     return { accessToken, refreshToken };
   },
 
+  /**
+   * Renueva el access token usando un refresh token válido
+   * Verifica que el refresh token no esté revocado buscando por jti
+   * @param refreshToken - Refresh token JWT para validar
+   * @returns Nuevos tokens (nuevo access token, mismo refresh token)
+   * @throws Error 401 si el refresh token es inválido, expirado o revocado
+   */
   refreshAccessToken: async (refreshToken: string): Promise<AuthTokens> => {
     try {
       const decoded = jwt.verify(
@@ -128,6 +162,11 @@ export const authService = {
     }
   },
 
+  /**
+   * Revoca un refresh token (lo marca como revocado en BD)
+   * Busca por jti en el payload del JWT, si existe lo revoca
+   * @param refreshToken - Refresh token JWT a revocar
+   */
   revokeRefreshToken: async (refreshToken: string): Promise<void> => {
     try {
       const decoded = jwt.verify(
@@ -140,10 +179,16 @@ export const authService = {
 
       await userRepository.revokeRefreshToken(jti);
     } catch {
-      // Silenciosamente ignorar
+      // Silenciosamente ignorar si el token es inválido
     }
   },
 
+  /**
+   * Obtiene información de un usuario por su ID
+   * @param userId - ID del usuario a buscar
+   * @returns UserRecord con datos del usuario
+   * @throws Error 404 si el usuario no existe
+   */
   getUserById: async (userId: number) => {
     const user = await userRepository.findById(userId);
     if (!user) {

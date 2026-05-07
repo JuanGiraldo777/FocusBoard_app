@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Hash, Plus, Search, Users } from "lucide-react";
+import { PageHeader } from "../components/PageHeader.tsx";
 import { joinRoom, listPublicRooms } from "../services/room.service.ts";
 import type { RoomListItem } from "../services/room.service.ts";
 import { normalizeRoomCode } from "../utils/room-code.ts";
@@ -70,40 +71,29 @@ export function RoomList() {
   return (
     <div className="min-h-screen bg-[#F7F8FA] dark:bg-[#0F1117]">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#EAECF0] bg-white text-[#1C2333] shadow-sm dark:border-[#2D3748] dark:bg-[#1A1D27] dark:text-white">
-                <Users className="h-5 w-5" />
-              </div>
-              <h1 className="text-2xl font-semibold tracking-tight text-[#1C2333] dark:text-white">
-                Salas de trabajo
-              </h1>
-            </div>
-            <p className="mt-2 text-sm text-[#4B5563] dark:text-[#9CA3AF]">
-              Únete a una sala activa o crea una nueva para empezar a colaborar.
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <button
-              type="button"
-              onClick={() => navigate("/join-room")}
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#EAECF0] bg-white px-4 py-2.5 text-sm font-semibold text-[#1C2333] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-sm dark:border-[#2D3748] dark:bg-[#1A1D27] dark:text-white"
-            >
-              <Hash className="h-4 w-4" />
-              Unirse por codigo
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate("/create-room")}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#F5A623] px-4 py-2.5 text-sm font-semibold text-[#1C2333] transition-all duration-150 hover:bg-opacity-90 hover:-translate-y-0.5 hover:shadow-sm dark:bg-[#F5A623] dark:text-[#1C2333]"
-            >
-              <Plus className="h-4 w-4" />
-              Crear sala
-            </button>
-          </div>
-        </div>
+        <PageHeader
+          title="Salas de trabajo"
+          actions={
+            <>
+              <button
+                type="button"
+                onClick={() => navigate("/join-room")}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#EAECF0] bg-white px-4 py-2.5 text-sm font-semibold text-[#1C2333] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-sm dark:border-[#2D3748] dark:bg-[#1A1D27] dark:text-white"
+              >
+                <Hash className="h-4 w-4" />
+                Unirse
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/create-room")}
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#F5A623] px-4 py-2.5 text-sm font-semibold text-[#1C2333] transition-all duration-150 hover:bg-opacity-90 hover:-translate-y-0.5 hover:shadow-sm dark:bg-[#F5A623] dark:text-[#1C2333]"
+              >
+                <Plus className="h-4 w-4" />
+                Crear sala
+              </button>
+            </>
+          }
+        />
 
         <div className="mb-8 max-w-md">
           <div className="relative">

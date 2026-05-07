@@ -3,28 +3,47 @@ import { env } from './env.ts'
 
 const { Pool } = pg
 
+// ─── Configuración de la base de datos PostgreSQL ──────────────────────
+// Este archivo configura el pool de conexiones a PostgreSQL usando
+// las credenciales del archivo .env. Maneja reconexiones automáticas
+// y cierre limpio del pool al apagar el servidor.
+
 // Pool de conexiones — máximo 10 conexiones simultáneas
+// idleTimeoutMillis: cierra conexiones inactivas tras 30s para liberar recursos
+// connectionTimeoutMillis: error si no conecta en 2s para fallar rápido
 const pool = new Pool({
   connectionString: env.DATABASE_URL,
   max: 10,
-  idleTimeoutMillis: 30000,    // cierra conexiones inactivas tras 30s
-  connectionTimeoutMillis: 2000, // error si no conecta en 2s
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
 })
 
-// Verificar conexión al arrancar
+// Verificar conexión al arrancar y cerrar el proceso si falla
 pool.on('error', (err) => {
   console.error('Error inesperado en el pool de PostgreSQL:', err.message)
   process.exit(1)
 })
 
 export const db = {
-  // Ejecutar una query
+  /**
+   * Ejecuta una query SQL parametrizada contra la base de datos
+   * @param text - Query SQL con placeholders $1, $2, etc.
+   * @param params - Array de parámetros para la query
+   * @returns Resultado de la query con rows y metadata
+   */
   query: (text: string, params?: unknown[]) => pool.query(text, params),
 
-  // Obtener una conexión del pool (para transacciones)
+  /**
+   * Obtiene una conexión del pool para usar en transacciones
+   * @returns Cliente de PostgreSQL para usar en transacciones BEGIN/COMMIT/ROLLBACK
+   */
   getClient: () => pool.connect(),
 }
 
+/**
+ * Verifica que la base de datos esté respondiendo correctamente
+ * @returns true si la conexión es exitosa, false si hay error
+ */
 export const healthCheck = async (): Promise<boolean> => {
   try {
     await pool.query('SELECT 1')
@@ -34,6 +53,11 @@ export const healthCheck = async (): Promise<boolean> => {
   }
 }
 
+/**
+ * Conecta a PostgreSQL y verifica la conexión al arrancar el servidor
+ * Registra los handlers de cierre limpio (SIGTERM, SIGINT) para liberar el pool
+ * @throws Error si no se puede conectar, detiene el proceso con exit(1)
+ */
 export const connectDB = async (): Promise<void> => {
   try {
     const client = await pool.connect()

@@ -8,6 +8,15 @@ import type {
 import { createAppError } from "../types/errors.ts";
 
 export const authController = {
+  /**
+   * Maneja el registro de nuevos usuarios
+   * Extrae email, password y fullName del body validado
+   * Establece cookies httpOnly para access y refresh tokens
+   * @param req - Request con body validado (RegisterRequest)
+   * @param res - Response para establecer cookies y devolver tokens
+   * @param next - Pasa errores al errorHandler
+   * @throws Error 409 si el email ya está registrado
+   */
   register: async (
     req: Request<Record<string, never>, unknown, RegisterRequest>,
     res: Response,
@@ -44,6 +53,16 @@ export const authController = {
     }
   },
 
+  /**
+   * Maneja el login de usuarios existentes
+   * Extrae email y password del body, captura IP y User-Agent para auditoría
+   * Establece cookies httpOnly para access y refresh tokens
+   * @param req - Request con body validado (LoginRequest)
+   * @param res - Response para establecer cookies y devolver tokens
+   * @param next - Pasa errores al errorHandler
+   * @throws Error 401 si credenciales inválidas
+   * @throws Error 403 si la cuenta está desactivada
+   */
   login: async (
     req: Request<Record<string, never>, unknown, LoginRequest>,
     res: Response,
@@ -83,6 +102,14 @@ export const authController = {
     }
   },
 
+  /**
+   * Renueva el access token usando el refresh token de la cookie
+   * Extrae refreshToken de req.cookies y genera un nuevo access token
+   * @param req - Request con cookie refreshToken
+   * @param res - Response para establecer nueva cookie de access token
+   * @param next - Pasa errores al errorHandler
+   * @throws Error 401 si el refresh token no existe, es inválido o expirado
+   */
   refresh: async (
     req: Request,
     res: Response,
@@ -114,6 +141,13 @@ export const authController = {
     }
   },
 
+  /**
+   * Cierra la sesión del usuario revocando el refresh token
+   * Limpia las cookies accessToken y refreshToken
+   * @param req - Request con cookie refreshToken a revocar
+   * @param res - Response confirmando cierre de sesión
+   * @param next - Pasa errores al errorHandler
+   */
   logout: async (
     req: Request,
     res: Response,
@@ -137,6 +171,16 @@ export const authController = {
     }
   },
 
+  /**
+   * Obtiene la información del usuario autenticado
+   * Usa req.user (establecido por auth middleware) para buscar el usuario
+   * Mapea el UserRecord a DTO antes de devolverlo
+   * @param req - Request con req.user poblado por auth middleware
+   * @param res - Response con datos del usuario en DTO
+   * @param next - Pasa errores al errorHandler
+   * @throws Error 401 si el usuario no está autenticado
+   * @throws Error 404 si el usuario no existe
+   */
   me: async (
     req: Request,
     res: Response,

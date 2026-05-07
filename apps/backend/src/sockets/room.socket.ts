@@ -62,7 +62,6 @@ export const setupRoomSockets = (io: SocketIOServer) => {
 
   io.on("connection", (socket: Socket) => {
     const socketWithData = socket as SocketWithUserData;
-    console.log(`Socket connected: ${socket.id}`);
     // Unir socket a room por usuario para emisiones personales
     const connectedUserId = socketWithData.data.user?.id;
     if (connectedUserId) {
@@ -183,14 +182,11 @@ export const setupRoomSockets = (io: SocketIOServer) => {
       const userId = socketWithData.data.user?.id;
       // El servidor recibe ping cada 25s
       // Si no recibe ping en 30s, marca como desconectado
-      console.log(`Ping from user ${userId ?? "unknown"} in room ${data.code}`);
     });
 
     // Desconexión
     socket.on("disconnect", async () => {
       try {
-        console.log(`Socket disconnected: ${socket.id}`);
-
         // Obtener info de la sala desde el mapa
         const roomInfo = socketRoomMap.get(socket.id);
 

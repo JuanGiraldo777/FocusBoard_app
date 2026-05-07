@@ -5,12 +5,18 @@ import { AuthContext } from "./auth.context.ts";
 import { apiCall } from "../utils/api.ts";
 import { loginUser, registerUser } from "../services/auth.service.ts";
 
+/**
+ * Provider que gestiona el estado de autenticación global de FocusBoard.
+ * Verifica sesión al montar, maneja login/register/logout
+ * y expone user, isAuthenticated, isLoading, error y funciones.
+ * Se usa en toda la app envuelto en <AuthProvider>.
+ */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Check if user is already logged in (on app mount)
+  // Verifica si el usuario ya tiene sesión activa al cargar la app
   useEffect(() => {
     const checkSession = async () => {
       try {
@@ -27,6 +33,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkSession();
   }, []);
 
+  /**
+   * Inicia sesión con email y contraseña
+   * Actualiza el estado user tras login exitoso
+   * @param email - Email del usuario
+   * @param password - Contraseña en texto plano
+   * @throws Error si el login falla
+   */
   const login = useCallback(async (email: string, password: string) => {
     try {
       setError(null);
@@ -41,6 +54,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  /**
+   * Registra un nuevo usuario y inicia sesión automáticamente
+   * @param email - Email del nuevo usuario
+   * @param password - Contraseña (mín 8 caracteres)
+   * @param fullName - Nombre completo
+   * @throws Error si el registro falla
+   */
   const register = useCallback(
     async (email: string, password: string, fullName: string) => {
       try {
@@ -59,6 +79,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
+  /**
+   * Cierra la sesión del usuario actual
+   * Limpia el estado user y cookies vía backend
+   * @throws Error si el logout falla
+   */
   const logout = useCallback(async () => {
     try {
       setError(null);

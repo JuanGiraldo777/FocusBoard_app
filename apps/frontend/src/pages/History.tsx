@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { PageHeader } from "../components/PageHeader.tsx";
 import {
   getTodaySessions,
   getWeekSessions,
@@ -47,27 +48,38 @@ interface CustomTooltipProps {
   label?: string;
 }
 
- const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white dark:bg-[#1A1D27] border border-[#EAECF0] dark:border-[#2D3748] rounded-lg p-3 shadow-lg">
-          <p className="text-sm font-medium text-gray-800 dark:text-white">{formatDay(label || '')}</p>
-          <p className="text-sm text-[#F5A623]">{`${payload[0].value} sesiones`}</p>
-        </div>
-      );
-    }
-    return null;
-  };
+/**
+ * Componente que renderiza el historial de productividad del usuario.
+ * Se usa en la ruta "/history" y está envuelto en Layout.
+ * Incluye: estadísticas cards, gráfica semanal de Recharts,
+ * selector de periodo (Hoy/Semana/Mes) y lista de sesiones de hoy.
+ * Soporta estados: loading (skeleton), vacío y con datos.
+ */
+const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white dark:bg-[#1A1D27] border border-[#EAECF0] dark:border-[#2D3748] rounded-lg p-3 shadow-lg">
+        <p className="text-sm font-medium text-gray-800 dark:text-white">{formatDay(label || '')}</p>
+        <p className="text-sm text-[#F5A623]">{`${payload[0].value} sesiones`}</p>
+      </div>
+    );
+  }
+  return null;
+};
 
 export function History() {
   const navigate = useNavigate();
   const [todaySessions, setTodaySessions] = useState<Session[]>([]);
   const [weekSessions, setWeekSessions] = useState<WeekDay[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
-  const [dailyGoal, setDailyGoal] = useState<number>(8);
+  const [, setDailyGoal] = useState<number>(8);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<'today' | 'week' | 'month'>('week');
 
+  /**
+   * Obtiene todos los datos del historial al montar el componente.
+   * Usa Promise.all para paralelizar las peticiones.
+   */
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -91,8 +103,6 @@ export function History() {
 
     fetchData();
   }, []);
-
- 
 
   if (loading) {
     return (
@@ -133,31 +143,30 @@ export function History() {
     <div className="min-h-screen bg-[#F7F8FA] dark:bg-[#1C2333] p-6">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <BarChart2 className="w-8 h-8 text-[#F5A623]" />
-            <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">Historial</h1>
-          </div>
-          {/* Period Selector */}
-          <div className="flex gap-1 bg-white dark:bg-[#1A1D27] border border-[#EAECF0] dark:border-[#2D3748] rounded-lg p-1">
-            {['Hoy', 'Esta semana', 'Este mes'].map((tab) => {
-              const value = tab === 'Hoy' ? 'today' : tab === 'Esta semana' ? 'week' : 'month';
-              return (
-                <button
-                  key={tab}
-                  onClick={() => setPeriod(value)}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    period === value
-                      ? 'bg-[#F5A623] text-white'
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2D3748]'
-                  }`}
-                >
-                  {tab}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <PageHeader
+          title="Historial"
+          subtitle="Tu productividad a lo largo del tiempo"
+          actions={
+            <div className="flex gap-1 bg-white dark:bg-[#1A1D27] border border-[#EAECF0] dark:border-[#2D3748] rounded-lg p-1">
+              {['Hoy', 'Esta semana', 'Este mes'].map((tab) => {
+                const value = tab === 'Hoy' ? 'today' : tab === 'Esta semana' ? 'week' : 'month';
+                return (
+                  <button
+                    key={tab}
+                    onClick={() => setPeriod(value)}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                      period === value
+                        ? 'bg-[#F5A623] text-white'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2D3748]'
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                );
+              })}
+            </div>
+          }
+        />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -217,7 +226,7 @@ export function History() {
           <h2 className="text-base font-semibold text-gray-800 dark:text-white mb-4">Sesiones de hoy</h2>
           {todaySessions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 gap-4">
-              <BarChart2 className="w-16 h-16 text-gray-300 dark:text-[#2D3748]" />
+              <BarChart2 className="w-16 h-16 text-gray-300 dark:text-[#2D3748] mx-auto" />
               <p className="text-lg font-medium text-gray-500 dark:text-gray-400">Sin sesiones todavia</p>
               <p className="text-sm text-gray-400 dark:text-gray-500 text-center max-w-md">
                 Inicia tu primer Pomodoro para ver tu historial aqui

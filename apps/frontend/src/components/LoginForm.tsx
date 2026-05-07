@@ -1,7 +1,12 @@
 import { useNavigate } from "react-router-dom";
 import { useLoginForm } from "../hooks/useLoginForm";
-import { useAuth } from "../hooks/useAuth.ts";
+import { useAuth } from "../hooks/useAuth";
 
+/**
+ * Componente que renderiza el formulario de inicio de sesión.
+ * Se usa en Login.tsx para capturar credenciales y validar en tiempo real.
+ * Maneja estados de carga y errores provenientes del servidor.
+ */
 export function LoginForm() {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -16,6 +21,10 @@ export function LoginForm() {
     setSubmitError,
   } = useLoginForm();
 
+  /**
+   * Maneja el envío del formulario de login.
+   * Valida antes de enviar y redirige al dashboard si es exitoso.
+   */
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -26,7 +35,10 @@ export function LoginForm() {
 
     setIsLoading(true);
     try {
-      await login(formData.email, formData.password);
+      await login(
+        formData.email,
+        formData.password,
+      );
 
       // ✅ Éxito - El contexto de autenticación maneja la redirección
       reset();

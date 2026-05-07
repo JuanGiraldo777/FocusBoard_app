@@ -13,13 +13,14 @@ import {
   Music,
   ChevronDown,
 } from "lucide-react";
+import { PageHeader } from "../components/PageHeader.tsx";
 import { TimerDisplay } from "../components/TimerDisplay.tsx";
 import { AmbientSoundControls } from "../components/AmbientSoundControls.tsx";
 
 export function Room() {
   const { code } = useParams();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   const { members, roomDeleted } = useSocket(code || "");
   const [room, setRoom] = useState<RoomData | null>(null);
@@ -76,18 +77,8 @@ export function Room() {
       return;
     }
 
-    setActionSuccess("La sala fue eliminada por el owner");
     navigate("/dashboard", { replace: true });
   }, [roomDeleted, navigate]);
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate("/login", { replace: true });
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
-  };
 
   const copyCode = () => {
     if (code) {
@@ -159,35 +150,13 @@ export function Room() {
 
   return (
     <div className="min-h-screen bg-[#F7F8FA] dark:bg-[#1A1D27]">
-      <header className="border-b border-[#EAECF0] dark:border-[#2D3748] bg-white dark:bg-[#1A1D27]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div>
-              <h1 className="text-xl font-semibold text-[#1C2333] dark:text-white">
-                {roomTitle}
-              </h1>
-              <div className="mt-1 flex items-center gap-3">
-                <div className="inline-flex items-center gap-2 bg-[#F7F8FA] dark:bg-[#1A1D27] border border-[#EAECF0] dark:border-[#2D3748] px-2 py-1 rounded text-sm font-mono text-[#1C2333] dark:text-white">
-                  <span className="text-xs">{code}</span>
-                  <button
-                    onClick={copyCode}
-                    className="ml-1 text-[#1C2333] dark:text-white hover:opacity-80"
-                  >
-                    <Copy className="h-4 w-4" />
-                  </button>
-                </div>
-
-                <div className="inline-flex items-center gap-2 px-2 py-1 rounded bg-white dark:bg-[#17202a] border border-[#EAECF0] dark:border-[#2D3748] text-sm">
-                  <Users className="h-4 w-4 text-[#1C2333] dark:text-white" />
-                  <span className="text-sm text-[#4B5563] dark:text-[#9CA3AF]">
-                    {members.length} miembros activos
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <PageHeader
+          title={roomTitle}
+          subtitle={code ? `Código: ${code}` : undefined}
+          backTo="/rooms"
+          backLabel="Salas"
+          actions={
             <button
               onClick={() => {
                 const confirmed = window.confirm("¿Salir de la sala?");
@@ -199,18 +168,30 @@ export function Room() {
               <LogOut className="h-4 w-4" />
               Salir de la sala
             </button>
+          }
+        />
 
+        {/* Room code and members info */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="inline-flex items-center gap-2 bg-[#F7F8FA] dark:bg-[#1A1D27] border border-[#EAECF0] dark:border-[#2D3748] px-2 py-1 rounded text-sm font-mono text-[#1C2333] dark:text-white">
+            <span className="text-xs">{code}</span>
             <button
-              onClick={handleLogout}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm bg-transparent text-[#1C2333] dark:text-white border border-[#EAECF0] dark:border-[#2D3748] hover:bg-[#F7F8FA] dark:hover:bg-[#131417]"
+              onClick={copyCode}
+              className="ml-1 text-[#1C2333] dark:text-white hover:opacity-80"
             >
-              Cerrar sesión
+              <Copy className="h-4 w-4" />
             </button>
           </div>
-        </div>
-      </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="inline-flex items-center gap-2 px-2 py-1 rounded bg-white dark:bg-[#17202a] border border-[#EAECF0] dark:border-[#2D3748] text-sm">
+            <Users className="h-4 w-4 text-[#1C2333] dark:text-white" />
+            <span className="text-sm text-[#4B5563] dark:text-[#9CA3AF]">
+              {members.length} miembros activos
+            </span>
+          </div>
+        </div>
+
+      <div className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Miembros */}
         <section className="lg:col-span-2 space-y-6">
           {actionError && (
@@ -279,13 +260,10 @@ export function Room() {
                         )}
 
                         {"timeLeft" in member &&
-                          typeof (member as any).timeLeft === "number" && (
+                          typeof member.timeLeft === "number" && (
                             <div className="mt-2 text-xs text-[#4B5563] dark:text-[#9CA3AF]">
-                              {Math.floor((member as any).timeLeft / 60)}:
-                              {String((member as any).timeLeft % 60).padStart(
-                                2,
-                                "0",
-                              )}
+                              {Math.floor(member.timeLeft / 60)}:
+                              {String(member.timeLeft % 60).padStart(2, "0")}
                             </div>
                           )}
                       </div>
@@ -346,11 +324,11 @@ export function Room() {
               <div className="px-4 pb-4">
                 <AmbientSoundControls
                   options={[]}
-                  selectedSoundId={"rain" as any}
+                  selectedSoundId={"rain"}
                   selectedSoundLabel={"--"}
                   selectedSoundDescription={""}
                   volume={0}
-                  status={"idle" as any}
+                  status={"idle"}
                   error={null}
                   onSelectSound={() => {}}
                   onVolumeChange={() => {}}
@@ -359,7 +337,8 @@ export function Room() {
             )}
           </div>
         </aside>
-      </main>
+      </div>
+      </div>
     </div>
   );
 }

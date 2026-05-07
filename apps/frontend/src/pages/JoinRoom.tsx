@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { PageHeader } from "../components/PageHeader.tsx";
 import { roomService } from "../services/room.service.ts";
 import type { RoomData } from "../services/room.service.ts";
 import { isValidRoomCode, normalizeRoomCode } from "../utils/room-code.ts";
@@ -69,23 +69,13 @@ export function JoinRoom() {
 
   return (
     <div className="min-h-screen bg-[#F7F8FA] dark:bg-[#1A1D27] flex items-center justify-center px-4 py-12">
-      <div className="absolute top-6 left-6">
-        <button
-          onClick={() => navigate("/rooms")}
-          className="inline-flex items-center gap-2 text-sm text-[#1C2333] dark:text-white"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Salas
-        </button>
-      </div>
-
       <div className="mx-auto w-full max-w-sm rounded-xl border border-[#EAECF0] bg-white p-8 shadow-sm dark:border-[#2D3748] dark:bg-[#1A1D27]">
-        <h2 className="text-2xl font-semibold text-[#1C2333] dark:text-white mb-2">
-          Unirse a una sala
-        </h2>
-        <p className="text-sm text-[#4B5563] dark:text-[#9CA3AF] mb-6">
-          Introduce el código de invitacion
-        </p>
+        <PageHeader
+          title="Unirse a una sala"
+          subtitle="Introduce el código de invitacion"
+          backTo="/rooms"
+          backLabel="Salas"
+        />
 
         {error && (
           <div

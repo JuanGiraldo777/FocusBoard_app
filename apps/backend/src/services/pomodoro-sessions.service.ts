@@ -1,5 +1,5 @@
 import { db } from "../config/database.ts";
-import type { CreateSessionRequest } from "../validators/session.validator.ts";
+import type { CreateSessionPayload } from "../validators/session.validator.ts";
 import { createAppError } from "../types/errors.ts";
 
 interface SessionStats {
@@ -11,7 +11,7 @@ interface SessionStats {
 const pomodoroSessionService = {
   async createSession(
     userId: number,
-    data: CreateSessionRequest,
+    data: CreateSessionPayload,
   ): Promise<void> {
     const client = await db.getClient();
 
@@ -78,15 +78,15 @@ const pomodoroSessionService = {
   async getWeekSessions(userId: number) {
     const result = await db.query(
       `SELECT 
-          DATE(started_at) as day,
-          COUNT(*) as count,
-          SUM(duration_seconds) as total_duration
-        FROM pomodoro_sessions 
-        WHERE user_id = $1 
-          AND status = 'completed'
-          AND started_at >= CURRENT_DATE - INTERVAL '6 days'
-        GROUP BY DATE(started_at)
-        ORDER BY day DESC`,
+         DATE(started_at) as day,
+         COUNT(*) as count,
+         SUM(duration_seconds) as total_duration
+       FROM pomodoro_sessions 
+       WHERE user_id = $1 
+         AND status = 'completed'
+         AND started_at >= CURRENT_DATE - INTERVAL '6 days'
+       GROUP BY DATE(started_at)
+       ORDER BY DATE(started_at) ASC`,
       [userId],
     );
     return result.rows;
@@ -96,41 +96,36 @@ const pomodoroSessionService = {
     // Get total pomodoros and total minutes
     const statsResult = await db.query(
       `SELECT 
-          COUNT(*) as total_pomodoros,
-          SUM(duration_seconds) as total_minutes
-        FROM pomodoro_sessions 
-        WHERE user_id = $1 
-          AND status = 'completed'`,
+         COUNT(*) as total_pomodoros,
+         COALESCE(SUM(duration_seconds), 0) as total_minutes
+       FROM pomodoro_sessions 
+       WHERE user_id = $1 AND status = 'completed'`,
       [userId],
     );
-
-    const totalPomodoros =
-      parseInt(statsResult.rows[0].total_pomodoros, 10) || 0;
-    const totalMinutes = parseInt(statsResult.rows[0].total_minutes, 10) || 0;
 
     // Calculate current streak (consecutive days with completed sessions)
     const streakResult = await db.query(
       `WITH days AS (
          SELECT DISTINCT DATE(started_at) as day
          FROM pomodoro_sessions 
-         WHERE user_id = $1 
-           AND status = 'completed'
+         WHERE user_id = $1 AND status = 'completed'
        )
        SELECT COUNT(*) as streak
        FROM (
          SELECT day,
-           day - ROW_NUMBER() OVER (ORDER BY day) as grp
+                day - ROW_NUMBER() OVER (ORDER BY day) as grp
          FROM days
+         WHERE day >= CURRENT_DATE - INTERVAL '30 days'
        ) t
-       WHERE day >= CURRENT_DATE - INTERVAL '30 days'
        GROUP BY grp
        ORDER BY MIN(day) DESC
        LIMIT 1`,
       [userId],
     );
 
-    const currentStreak =
-      parseInt(String(streakResult.rows[0]?.streak || "0"), 10) || 0;
+    const totalPomodoros = parseInt(statsResult.rows[0].total_pomodoros, 10) || 0;
+    const totalMinutes = Math.floor(parseInt(statsResult.rows[0].total_minutes, 10) / 60) || 0;
+    const currentStreak = parseInt(String(streakResult.rows[0]?.streak || "0"), 10) || 0;
 
     return { totalPomodoros, totalMinutes, currentStreak };
   },

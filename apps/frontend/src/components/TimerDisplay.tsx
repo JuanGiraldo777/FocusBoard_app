@@ -14,6 +14,13 @@ interface TimerDisplayProps extends Partial<TimerConfig> {
   onSessionSaved?: () => void;
 }
 
+/**
+ * Componente que renderiza el temporizador Pomodoro visual con SVG circular.
+ * Se usa en Dashboard.tsx y Room.tsx para mostrar el foco/descanso.
+ * Incluye: declaración de tarea, sonido ambiente, notificaciones del sistema,
+ * y guardado automático de sesiones en el backend.
+ * Usa Web Worker via useTimer para evitar throttling de pestaña.
+ */
 export function TimerDisplay({
   focusDuration = 25 * 60,
   breakDuration = 5 * 60,
@@ -33,6 +40,11 @@ export function TimerDisplay({
     }
   });
 
+  /**
+   * Maneja la finalización del temporizador (foco o descanso).
+   * Reproduce sonido, muestra notificación y guarda la sesión en backend.
+   * Usa useCallback para evitar recreación innecesaria.
+   */
   const handleComplete = useCallback(() => {
     void playNotificationSound();
     showSystemNotification();
@@ -44,7 +56,6 @@ export function TimerDisplay({
         startedAt: startTimeRef.current.toISOString(),
       })
         .then(() => {
-          console.log("Session saved in backend");
           if (onSessionSaved) onSessionSaved();
         })
         .catch((err) => {
@@ -64,6 +75,10 @@ export function TimerDisplay({
     onComplete: handleComplete,
   });
 
+  /**
+   * Determina la duración total según el estado actual.
+   * Usa useMemo para evitar recálculo innecesario.
+   */
   const currentTotal = useMemo(() => {
     if (timer.state === "focusing") return focusDuration;
     if (timer.state === "break") return breakDuration;
@@ -72,12 +87,17 @@ export function TimerDisplay({
 
   const ambientAudio = useAmbientAudio(timer.state === "focusing");
 
+  // Cleanup: cerrar AudioContext al desmontar
   useEffect(() => {
     return () => {
       audioContextRef.current?.close();
     };
   }, []);
 
+  /**
+   * Reproduce un sonido de campana al completar el temporizador.
+   * Usa AudioContext para evitar bloqueo del hilo principal.
+   */
   async function playNotificationSound() {
     try {
       if (!audioContextRef.current) {
@@ -96,6 +116,10 @@ export function TimerDisplay({
     }
   }
 
+  /**
+   * Muestra una notificación del sistema al completar el temporizador.
+   * Requiere permiso de notificaciones granted.
+   */
   function showSystemNotification() {
     if (
       typeof Notification === "undefined" ||
@@ -108,6 +132,10 @@ export function TimerDisplay({
     });
   }
 
+  /**
+   * Maneja el clic en "Iniciar": solicita permiso de notificación y abre modal.
+   * Usa useCallback para evitar recreación innecesaria.
+   */
   const handleStartClick = useCallback(() => {
     if (
       typeof Notification !== "undefined" &&
@@ -120,6 +148,11 @@ export function TimerDisplay({
     setIsModalOpen(true);
   }, []);
 
+  /**
+   * Guarda una tarea reciente en localStorage y estado.
+   * Mantiene máximo MAX_RECENT_TASKS tareas.
+   * Usa useCallback para evitar recreación innecesaria.
+   */
   const saveRecentTask = useCallback((task: string) => {
     setRecentTasks((prev) => {
       const filtered = prev.filter((t) => t !== task);
@@ -129,6 +162,11 @@ export function TimerDisplay({
     });
   }, []);
 
+  /**
+   * Maneja el envío de tarea desde el modal.
+   * Inicia el timer y guarda la tarea como actual.
+   * Usa useCallback para evitar recreación innecesaria.
+   */
   const handleTaskSubmit = useCallback(
     (task: string) => {
       setCurrentTask(task);

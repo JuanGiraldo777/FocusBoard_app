@@ -10,6 +10,11 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+/**
+ * Determina el tema inicial basado en localStorage o preferencia del sistema
+ * Usa matchMedia para detectar si el usuario prefiere dark mode
+ * @returns "light" o "dark"
+ */
 function getInitialTheme(): Theme {
   if (typeof window === "undefined") {
     return "light";
@@ -26,9 +31,15 @@ function getInitialTheme(): Theme {
   return systemPrefersDark ? "dark" : "light";
 }
 
+/**
+ * Provider que gestiona el tema claro/oscuro de FocusBoard.
+ * Persiste el tema en localStorage y aplica clase "dark" al html.
+ * Se usa en toda la app envuelto en <ThemeProvider>.
+ */
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
 
+  // Aplica el tema al DOM y guarda en localStorage
   useEffect(() => {
     const root = document.documentElement;
 
@@ -36,6 +47,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     root.classList.toggle("dark", theme === "dark");
   }, [theme]);
 
+  /**
+   * Valor memoizado que expone theme y toggleTheme
+   * Usa useMemo para evitar recreación innecesaria del contexto
+   */
   const value = useMemo<ThemeContextType>(
     () => ({
       theme,
@@ -51,6 +66,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * Hook que expone el contexto de tema.
+ * Debe usarse dentro de ThemeProvider.
+ * @returns ThemeContextType con theme y toggleTheme
+ * @throws Error si se usa fuera de ThemeProvider
+ */
 export function useTheme(): ThemeContextType {
   const context = useContext(ThemeContext);
   if (!context) {

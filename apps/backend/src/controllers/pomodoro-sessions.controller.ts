@@ -4,6 +4,7 @@ import { pomodoroSessionService } from "../services/pomodoro-sessions.service.ts
 import { createSessionSchema } from "../validators/session.validator.ts";
 import { getRedis } from "../config/redis.ts";
 import { createAppError } from "../types/errors.ts";
+import { validateCreateSession } from "../middleware/session.validation.ts";
 
 export const pomodoroSessionController = {
   create: async (

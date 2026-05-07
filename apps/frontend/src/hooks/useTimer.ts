@@ -8,6 +8,12 @@ const STORAGE_KEY = {
   lastUpdated: "timer:lastUpdated",
 };
 
+/**
+ * Restaura el tiempo restante desde sessionStorage considerando el tiempo transcurrido
+ * Evita que el timer pierda segundos si el usuario recarga la página
+ * @param focusDuration - Duración del foco en segundos
+ * @returns Tiempo restante inicial (restaurado o foco completo)
+ */
 function getInitialTimeLeft(focusDuration: number): number {
   const savedTimeLeft = sessionStorage.getItem(STORAGE_KEY.timeLeft);
   const savedLastUpdated = sessionStorage.getItem(STORAGE_KEY.lastUpdated);
@@ -26,6 +32,11 @@ function getInitialTimeLeft(focusDuration: number): number {
   return focusDuration;
 }
 
+/**
+ * Restaura el estado del timer desde sessionStorage
+ * Valida que el estado guardado sea uno de los valores válidos
+ * @returns Estado inicial del timer (idle, focusing, break, paused)
+ */
 function getInitialState(): TimerState {
   const savedState = sessionStorage.getItem(
     STORAGE_KEY.state,
@@ -39,11 +50,23 @@ function getInitialState(): TimerState {
   return "idle";
 }
 
+/**
+ * Restaura el número de sesiones completadas desde sessionStorage
+ * @returns Número de sesiones completadas (0 si no hay datos)
+ */
 function getInitialSessions(): number {
   const saved = sessionStorage.getItem(STORAGE_KEY.sessionsCompleted);
   return saved ? parseInt(saved, 10) : 0;
 }
 
+/**
+ * Hook que gestiona el temporizador Pomodoro con persistencia en sessionStorage.
+ * Usa Web Worker para evitar throttling de la pestaña (el navegador
+ * no ralentiza el timer cuando la pestaña está en segundo plano).
+ * Mantiene el estado sincronizado entre recargas de página.
+ * @param config - Configuración del hook (focusDuration, breakDuration, onComplete)
+ * @returns { timeLeft, state, sessionsCompleted, start, pause, resume, reset }
+ */
 export function useTimer(config?: TimerConfig) {
   const {
     focusDuration = 25 * 60,
@@ -66,14 +89,18 @@ export function useTimer(config?: TimerConfig) {
   const initialStateRef = useRef<TimerState>(state);
   const initialTimeLeftRef = useRef<number>(timeLeft);
 
-  // Update callback ref when it changes
+  // Actualiza la ref del callback cuando cambia para evitar stale closures
   useEffect(() => {
     onCompleteRef.current = onComplete;
   }, [onComplete]);
 
-  // Initialize worker
+  /**
+   * Inicializa el Web Worker para el temporizador
+   * El worker evita throttling del navegador en pestañas inactivas
+   * Maneja mensajes de tick y completed del worker
+   */
   useEffect(() => {
-    // Create worker
+    // Crear worker usando Vite (import.meta.url)
     const workerScript = new URL("../utils/timer.worker.ts", import.meta.url);
     const worker = new Worker(workerScript, { type: "module" });
 
@@ -85,7 +112,7 @@ export function useTimer(config?: TimerConfig) {
         sessionStorage.setItem(STORAGE_KEY.timeLeft, String(message.timeLeft));
         sessionStorage.setItem(STORAGE_KEY.lastUpdated, String(Date.now()));
       } else if (message.type === "completed") {
-        // Prevenir ejecución doble: solo procesar si han pasado >500ms desde la última vez
+        // Prevenir ejecución doble: solo procesar si han pasado >500ms
         const now = Date.now();
         if (now - lastCompletedAtRef.current < 500) {
           return; // Ignorar si es muy pronto (doble-call en StrictMode)
@@ -146,6 +173,7 @@ export function useTimer(config?: TimerConfig) {
     worker.addEventListener("message", handleWorkerMessage);
     workerRef.current = worker;
 
+    // Cleanup: remover listener y terminar worker al desmontar
     return () => {
       worker.removeEventListener("message", handleWorkerMessage);
       worker.postMessage({ type: "terminate" });
@@ -154,7 +182,10 @@ export function useTimer(config?: TimerConfig) {
     };
   }, [focusDuration, breakDuration]);
 
-  // Reiniciar worker si se restauró estado activo del sessionStorage (Test 7)
+  /**
+   * Reinicia el worker si se restauró estado activo del sessionStorage
+   * Evita inicialización doble usando isInitializedRef
+   */
   useEffect(() => {
     if (isInitializedRef.current || !workerRef.current) return;
 
@@ -176,6 +207,10 @@ export function useTimer(config?: TimerConfig) {
     }
   }, []);
 
+  /**
+   * Inicia el temporizador en modo focusing
+   * Usa useCallback para evitar recreación innecesaria de la función
+   */
   const start = useCallback(() => {
     setState("focusing");
     setTimeLeft(focusDuration);
@@ -188,6 +223,10 @@ export function useTimer(config?: TimerConfig) {
     }
   }, [focusDuration]);
 
+  /**
+   * Pausa el temporizador guardando el estado previo
+   * Usa useCallback para evitar recreación innecesaria
+   */
   const pause = useCallback(() => {
     pausedFromStateRef.current = state;
     setState("paused");
@@ -199,6 +238,10 @@ export function useTimer(config?: TimerConfig) {
     }
   }, [state]);
 
+  /**
+   * Reanuda el temporizador restaurando el estado previo al pausar
+   * Usa useCallback para evitar recreación innecesaria
+   */
   const resume = useCallback(() => {
     const restoredState =
       pausedFromStateRef.current === "break" ? "break" : "focusing";
@@ -211,6 +254,10 @@ export function useTimer(config?: TimerConfig) {
     }
   }, []);
 
+  /**
+   * Reinicia el temporizador al estado idle
+   * Usa useCallback para evitar recreación innecesaria
+   */
   const reset = useCallback(() => {
     setState("idle");
     setTimeLeft(focusDuration);

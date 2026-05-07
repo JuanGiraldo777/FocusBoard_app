@@ -47,6 +47,12 @@ const navigationItems: NavigationItem[] = [
   },
 ];
 
+/**
+ * Obtiene las iniciales del nombre completo del usuario.
+ * Usa useMemo para evitar recálculo innecesario.
+ * @param fullName - Nombre completo del usuario
+ * @returns Iniciales (máximo 2 caracteres) o "FB" por defecto
+ */
 function getInitials(fullName: string | null | undefined): string {
   if (!fullName) {
     return "FB";
@@ -63,6 +69,12 @@ function getInitials(fullName: string | null | undefined): string {
   return initials.join("");
 }
 
+/**
+ * Componente que renderiza la barra lateral de navegación de FocusBoard.
+ * Se usa en Layout.tsx para proporcionar navegación principal,
+ * selector de tema y botón de cierre de sesión.
+ * Incluye navegación activa con bordes y estados hover.
+ */
 export function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -71,6 +83,10 @@ export function Sidebar() {
 
   const initials = useMemo(() => getInitials(user?.fullName), [user?.fullName]);
 
+  /**
+   * Maneja el cierre de sesión del usuario.
+   * Redirige al login tras logout exitoso.
+   */
   const handleLogout = async () => {
     try {
       await logout();
@@ -105,15 +121,15 @@ export function Sidebar() {
 
             if (!item.to) {
               return (
-                <li key={item.id} className="px-2">
-                  <button
-                    type="button"
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-r-md text-[#4B5563] dark:text-[#9CA3AF] hover:bg-[#F7F8FA] dark:hover:bg-[#2D3748] transition-colors duration-150"
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span>{item.label}</span>
-                  </button>
-                </li>
+                  <li key={item.id} className="px-2">
+                    <button
+                      type="button"
+                      className="w-full flex items-center gap-3 px-3 py-2 rounded-r-md text-[#4B5563] dark:text-[#9CA3AF] hover:bg-[#F7F8FA] dark:hover:bg-[#2D3748] transition-colors duration-150"
+                    >
+                      <Icon className="w-5 h-5" />
+                      <span>{item.label}</span>
+                    </button>
+                  </li>
               );
             }
 

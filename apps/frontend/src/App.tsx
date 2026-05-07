@@ -9,8 +9,9 @@ import { History } from "./pages/History.tsx";
 import { JoinRoom } from "./pages/JoinRoom.tsx";
 import Login from "./pages/Login.tsx";
 import Register from "./pages/Register.tsx";
-import Room from "./pages/Room.tsx";
+import { Room }  from "./pages/Room.tsx";
 import { RoomList } from "./pages/RoomList.tsx";
+import { NotFound } from "./pages/NotFound.tsx";
 
 function App() {
   return (
@@ -97,6 +98,7 @@ function App() {
         />
 
         <Route path="/join" element={<Navigate to="/join-room" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </AuthProvider>
   );

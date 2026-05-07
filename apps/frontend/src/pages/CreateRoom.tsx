@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Globe, Lock } from "lucide-react";
+import { Globe, Lock } from "lucide-react";
+import { PageHeader } from "../components/PageHeader.tsx";
 import { createRoom } from "../services/room.service.ts";
 
 export function CreateRoom() {
@@ -70,28 +71,15 @@ export function CreateRoom() {
 
   return (
     <div className="min-h-screen bg-[#F7F8FA] dark:bg-[#1A1D27]">
-      <header className="border-b border-[#EAECF0] dark:border-[#2D3748] bg-transparent">
-        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 flex items-center gap-4">
-          <button
-            type="button"
-            onClick={() => navigate("/rooms")}
-            className="inline-flex items-center gap-2 text-sm font-medium text-[#1C2333] dark:text-white"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Salas
-          </button>
-          <div className="ml-4">
-            <h1 className="text-2xl font-semibold text-[#1C2333] dark:text-white">
-              Crear sala de trabajo
-            </h1>
-            <p className="mt-1 text-sm text-[#4B5563] dark:text-[#9CA3AF]">
-              Configura tu espacio de enfoque compartido
-            </p>
-          </div>
-        </div>
-      </header>
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <PageHeader
+          title="Crear sala de trabajo"
+          subtitle="Configura tu espacio de enfoque compartido"
+          backTo="/rooms"
+          backLabel="Salas"
+        />
 
-      <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-lg">
         <div className="mx-auto max-w-lg rounded-xl border border-[#EAECF0] bg-white p-8 shadow-sm dark:border-[#2D3748] dark:bg-[#1A1D27]">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
@@ -212,7 +200,8 @@ export function CreateRoom() {
             </button>
           </form>
         </div>
-      </main>
+      </div>
+      </div>
     </div>
   );
 }

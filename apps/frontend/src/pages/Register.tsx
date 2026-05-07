@@ -4,6 +4,11 @@ import { RegisterForm } from "../components/RegisterForm";
 import logo from "../assets/logo_focusboard.png";
 import { useTheme } from "../context/ThemeContext";
 
+/**
+ * Página que renderiza el registro de nuevos usuarios de FocusBoard.
+ * Se usa en la ruta "/register" y está envuelta en PublicRoute.
+ * Incluye toggle de tema, logo, formulario de registro y enlace a login.
+ */
 function Register() {
   const { theme, toggleTheme } = useTheme();
 
@@ -34,7 +39,7 @@ function Register() {
               alt="FocusBoard"
               className="h-10 w-10 rounded-xl object-cover dark:opacity-95"
             />
-            <span className="text-lg font-semibold tracking-tight text-[#1C2333] dark:text-white">
+            <span className="text-lg font-bold tracking-tight text-[#1C2333] dark:text-white">
               <span>Focus</span>
               <span className="text-[#F5A623]">Board</span>
             </span>
@@ -53,18 +58,18 @@ function Register() {
         </div>
 
         <p className="mt-6 text-center text-sm text-[#4B5563] dark:text-[#9CA3AF]">
-          Ya tienes cuenta?{" "}
+          ¿Ya tienes cuenta?{" "}
           <Link
             to="/login"
             className="font-semibold text-[#F5A623] transition-colors duration-150 hover:text-[#d8921e] dark:text-[#F5A623] dark:hover:text-[#ffb340]"
           >
-            Inicia sesion
+            Inicia sesión
           </Link>
         </p>
       </div>
 
       <p className="absolute bottom-4 left-0 right-0 text-center text-xs text-[#9CA3AF] dark:text-[#9CA3AF]">
-        FocusBoard — Enfocate en lo que importa
+        FocusBoard — Enfócate en lo que importa
       </p>
     </div>
   );

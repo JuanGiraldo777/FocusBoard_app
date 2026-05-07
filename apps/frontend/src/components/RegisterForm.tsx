@@ -1,7 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { useRegisterForm } from "../hooks/useRegisterForm";
-import { useAuth } from "../hooks/useAuth.ts";
+import { useAuth } from "../hooks/useAuth";
 
+/**
+ * Componente que renderiza el formulario de registro de FocusBoard.
+ * Se usa en Register.tsx para capturar datos y validar en tiempo real.
+ * Incluye validación de email, contraseña (mín 8 chars) y nombre completo.
+ * Maneja estados de carga y errores provenientes del servidor.
+ */
 export function RegisterForm() {
   const navigate = useNavigate();
   const { register } = useAuth();
@@ -16,6 +22,10 @@ export function RegisterForm() {
     setSubmitError,
   } = useRegisterForm();
 
+  /**
+   * Maneja el envío del formulario de registro.
+   * Valida antes de enviar y redirige al dashboard si es exitoso.
+   */
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 

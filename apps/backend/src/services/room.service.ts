@@ -21,8 +21,10 @@ type RoomListItem = ReturnType<typeof mapRawRoomToRoomListItem> & {
 const roomService = {
   /**
    * Genera un código único de 8 caracteres alfanuméricos
-   * Reintenta si hay colisión (máximo 5 intentos)
-   * Usa roomRepository para verificar existencia
+   * Usa crypto.randomBytes para alta entropía y verifica unicidad con repository
+   * @param maxRetries - Máximo de intentos antes de lanzar error (default 5)
+   * @returns Código único de 8 caracteres en mayúsculas
+   * @throws Error si no se pudo generar código único tras los reintentos
    */
   async generateUniqueCode(maxRetries: number = 5): Promise<string> {
     for (let i = 0; i < maxRetries; i++) {
@@ -42,7 +44,11 @@ const roomService = {
 
   /**
    * Crea una sala y agrega al creador como primer miembro
-   * Usa transacción atómica para asegurar consistencia
+   * Usa transacción atómica: genera código, inserta sala, agrega miembro
+   * @param userId - ID del usuario que crea la sala (se vuelve owner)
+   * @param data - Datos de la sala (name, isPublic, maxMembers)
+   * @returns Room con todos los datos de la sala creada
+   * @throws Error si falla la transacción de base de datos
    */
   async createRoom(userId: number, data: CreateRoomRequest): Promise<Room> {
     const client = await roomRepository.getClient();
@@ -79,6 +85,8 @@ const roomService = {
 
   /**
    * Busca una sala por su código único
+   * @param code - Código de 8 caracteres de la sala
+   * @returns Room o null si no existe
    */
   async findByCode(code: string): Promise<Room | null> {
     const rawRoom = await roomRepository.findByCode(code);
@@ -87,8 +95,12 @@ const roomService = {
 
   /**
    * Lista salas públicas con búsqueda y paginación
-   * Usa Redis para cachear resultados (30 segundos)
+   * Usa Redis para cachear resultados por 30 segundos
    * Obtiene miembros activos desde Redis SET room:{code}:members
+   * @param search - Término de búsqueda por nombre (opcional)
+   * @param limit - Máximo de resultados (default 20)
+   * @param offset - Desplazamiento para paginación (default 0)
+   * @returns Array de RoomListItem con activeMembers incluido
    */
   async listPublicRooms(
     search?: string,
@@ -151,10 +163,15 @@ const roomService = {
   },
 
   /**
-   * Unirse a una sala por código
+   * Une al usuario a una sala por código
    * Valida existencia, capacidad y membresía previa
    * Usa transacción atómica: INSERT + UPDATE last_activity
    * Actualiza SET de Redis con el nuevo userId
+   * @param userId - ID del usuario que se une
+   * @param code - Código de 8 caracteres de la sala
+   * @returns Room con datos de la sala
+   * @throws Error 404 si la sala no existe
+   * @throws Error 409 si la sala está llena o ya es miembro
    */
   async joinRoom(userId: number, code: string): Promise<Room> {
     // 1. Buscar sala por código
@@ -208,7 +225,13 @@ const roomService = {
   },
 
   /**
-   * Elimina al usuario de room_members sin borrar historial pomodoro.
+   * Elimina al usuario de room_members sin borrar historial pomodoro
+   * Actualiza Redis removiendo al usuario del SET de miembros
+   * Emite evento por socket para notificar a otros miembros
+   * @param userId - ID del usuario que sale
+   * @param code - Código de la sala
+   * @throws Error 404 si la sala no existe
+   * @throws Error 409 si el usuario no es miembro
    */
   async leaveRoom(userId: number, code: string): Promise<void> {
     const rawRoom = await roomRepository.findByCode(code);
@@ -255,6 +278,11 @@ const roomService = {
   /**
    * Elimina sala completa. Solo owner puede ejecutar.
    * room_members se elimina por CASCADE en DB.
+   * Limpia Redis (SET de miembros y caché) y emite eventos a todos los miembros
+   * @param userId - ID del usuario (debe ser owner)
+   * @param roomId - ID interno de la sala
+   * @throws Error 404 si la sala no existe
+   * @throws Error 403 si el usuario no es el owner
    */
   async deleteRoom(userId: number, roomId: number): Promise<void> {
     const rawRoom = await roomRepository.findById(roomId);

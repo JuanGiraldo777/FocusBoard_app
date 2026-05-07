@@ -1,5 +1,6 @@
 import { useAuth } from "../hooks/useAuth.ts";
 import { TimerDisplay } from "../components/TimerDisplay.tsx";
+import { PageHeader } from "../components/PageHeader.tsx";
 import { useEffect, useState } from "react";
 import { getTodaySessionsCount } from "../services/dashboard.service.ts";
 import { BarChart2, Users } from "lucide-react";
@@ -54,48 +55,13 @@ export function Dashboard() {
     return "Buenas noches";
   };
 
-  const getFormattedDate = () => {
-    const now = new Date();
-    const days = [
-      "Lunes",
-      "Martes",
-      "Miércoles",
-      "Jueves",
-      "Viernes",
-      "Sábado",
-      "Domingo",
-    ];
-    const months = [
-      "enero",
-      "febrero",
-      "marzo",
-      "abril",
-      "mayo",
-      "junio",
-      "julio",
-      "agosto",
-      "septiembre",
-      "octubre",
-      "noviembre",
-      "diciembre",
-    ];
-    return `${days[now.getDay()]}, ${now.getDate()} de ${months[now.getMonth()]}`;
-  };
-
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold text-[#1C2333] dark:text-white">
-          {getGreeting()}, {firstName}
-        </h1>
-        <p className="text-sm text-[#4B5563] dark:text-[#9CA3AF]">
-          {getFormattedDate()}
-        </p>
-        <p className="text-sm italic text-[#4B5563] dark:text-[#9CA3AF]">
-          ¿Qué vas a lograr hoy?
-        </p>
-      </div>
+      <PageHeader
+        title={`${getGreeting()}, ${firstName}`}
+        subtitle="¿Qué vas a lograr hoy?"
+      />
 
       {/* Main Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

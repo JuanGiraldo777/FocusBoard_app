@@ -15,8 +15,16 @@ export interface UserRecord {
   created_at: string;
 }
 
+/**
+ * Repositorio de usuarios — todas las operaciones de BD relacionadas con users
+ * Usa transacciones para operaciones que modifican multiples tablas
+ */
 export const userRepository = {
-  // Buscar usuario por email
+  /**
+   * Busca un usuario por su email (para verificar duplicados en registro)
+   * @param email - Email del usuario a buscar
+   * @returns UserRecord completo o null si no existe
+   */
   findByEmail: async (email: string): Promise<UserRecord | null> => {
     const result = await db.query("SELECT * FROM users WHERE email = $1", [
       email,
@@ -24,7 +32,11 @@ export const userRepository = {
     return result.rows[0] ?? null;
   },
 
-  // Buscar usuario por email CON password_hash (para login)
+  /**
+   * Busca usuario por email incluyendo password_hash (solo para login)
+   * @param email - Email del usuario
+   * @returns Objeto con id, email, password_hash e is_active o null
+   */
   findByEmailWithPassword: async (
     email: string,
   ): Promise<{
@@ -40,11 +52,17 @@ export const userRepository = {
     return result.rows[0] ?? null;
   },
 
-  // Crear usuario + user_settings en una transacción
+  /**
+   * Crea usuario + user_settings en una transacción atómica
+   * Usa BEGIN/COMMIT/ROLLBACK para asegurar consistencia entre tablas
+   * @param data - Datos del usuario (email, passwordHash, fullName)
+   * @returns UserRecord del usuario recién creado
+   * @throws Error si la transacción falla (se hace ROLLBACK automático)
+   */
   createWithSettings: async (data: CreateUserData): Promise<UserRecord> => {
     const client = await db.getClient();
 
-    // BEGIN    → "empieza un bloque atómico"
+    // BEGIN → "empieza un bloque atómico"
     try {
       await client.query("BEGIN");
 
@@ -65,7 +83,7 @@ export const userRepository = {
         [user.id],
       );
 
-      // COMMIT   → "guarda todo si no hubo errores"
+      // COMMIT → "guarda todo si no hubo errores"
       await client.query("COMMIT");
       return user;
     } catch (error) {
@@ -77,7 +95,14 @@ export const userRepository = {
     }
   },
 
-  // Guardar refresh token hasheado en la BD
+  /**
+   * Guarda refresh token hasheado en la BD (método legacy sin jti)
+   * @param userId - ID del usuario
+   * @param tokenHash - Hash del refresh token (bcrypt)
+   * @param expiresAt - Fecha de expiración del token
+   * @param ipAddress - IP del cliente (opcional)
+   * @param userAgent - User-Agent del cliente (opcional)
+   */
   saveRefreshToken: async (
     userId: number,
     tokenHash: string,
@@ -92,7 +117,11 @@ export const userRepository = {
     );
   },
 
-  // Buscar usuario por ID
+  /**
+   * Busca usuario por ID (para validar tokens y obtener perfil)
+   * @param id - ID del usuario
+   * @returns UserRecord o null si no existe
+   */
   findById: async (id: number): Promise<UserRecord | null> => {
     const result = await db.query(
       "SELECT id, email, full_name, avatar_url, is_active, created_at FROM users WHERE id = $1",
@@ -101,7 +130,11 @@ export const userRepository = {
     return result.rows[0] ?? null;
   },
 
-  // Verificar si un refresh token está revocado (por jti)
+  /**
+   * Verifica si un refresh token está revocado buscando por jti
+   * @param jti - JWT ID del refresh token
+   * @returns true si está revocado o no existe, false si es válido
+   */
   isRefreshTokenRevoked: async (jti: string): Promise<boolean> => {
     const result = await db.query(
       "SELECT revoked_at FROM refresh_tokens WHERE token_jti = $1 LIMIT 1",
@@ -110,7 +143,10 @@ export const userRepository = {
     return result.rows.length === 0 || result.rows[0].revoked_at !== null;
   },
 
-  // Revocar un refresh token (por jti)
+  /**
+   * Revoca un refresh token (establece revoked_at = NOW())
+   * @param jti - JWT ID del refresh token a revocar
+   */
   revokeRefreshToken: async (jti: string): Promise<void> => {
     await db.query(
       "UPDATE refresh_tokens SET revoked_at = NOW() WHERE token_jti = $1",
@@ -118,7 +154,15 @@ export const userRepository = {
     );
   },
 
-  // Guardar refresh token con jti para revocación
+  /**
+   * Guarda refresh token con jti para permitir revocación individual
+   * @param userId - ID del usuario
+   * @param tokenHash - Hash del refresh token
+   * @param jti - JWT ID único para revocación
+   * @param expiresAt - Fecha de expiración
+   * @param ipAddress - IP del cliente (opcional)
+   * @param userAgent - User-Agent del cliente (opcional)
+   */
   saveRefreshTokenWithJti: async (
     userId: number,
     tokenHash: string,

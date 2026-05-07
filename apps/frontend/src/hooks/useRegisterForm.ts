@@ -13,6 +13,11 @@ export interface FormData {
   fullName: string;
 }
 
+/**
+ * Hook que gestiona el estado y validación del formulario de registro.
+ * Incluye validación en tiempo real y validación completa antes de envío.
+ * @returns { formData, errors, isLoading, setIsLoading, handleChange, isValid, reset, setSubmitError }
+ */
 export function useRegisterForm() {
   const [formData, setFormData] = useState<FormData>({
     email: "",
@@ -24,6 +29,12 @@ export function useRegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
 
   // ─── Validaciones individuales ──────────────────────────
+
+  /**
+   * Valida el formato de email usando regex básica
+   * @param email - Email a validar
+   * @returns Mensaje de error o undefined si es válido
+   */
   const validateEmail = (email: string): string | undefined => {
     if (!email.trim()) {
       return "Email es requerido";
@@ -35,6 +46,11 @@ export function useRegisterForm() {
     return undefined;
   };
 
+  /**
+   * Valida la contraseña (mínimo 8 caracteres)
+   * @param password - Contraseña a validar
+   * @returns Mensaje de error o undefined si es válido
+   */
   const validatePassword = (password: string): string | undefined => {
     if (!password) {
       return "Password es requerido";
@@ -45,6 +61,11 @@ export function useRegisterForm() {
     return undefined;
   };
 
+  /**
+   * Valida el nombre completo (no vacío)
+   * @param fullName - Nombre a validar
+   * @returns Mensaje de error o undefined si es válido
+   */
   const validateFullName = (fullName: string): string | undefined => {
     if (!fullName.trim()) {
       return "Nombre es requerido";
@@ -53,6 +74,10 @@ export function useRegisterForm() {
   };
 
   // ─── Validación en tiempo real ──────────────────────────
+  /**
+   * Maneja el cambio en inputs y valida el campo modificado
+   * Usa useCallback para evitar recreación innecesaria
+   */
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.currentTarget;
 
@@ -79,6 +104,10 @@ export function useRegisterForm() {
   }, []);
 
   // ─── Validación completa del formulario ────────────────
+  /**
+   * Valida todos los campos del formulario antes del envío
+   * @returns true si el formulario es válido, false si hay errores
+   */
   const isValid = (): boolean => {
     const emailError = validateEmail(formData.email);
     const passwordError = validatePassword(formData.password);
@@ -88,6 +117,10 @@ export function useRegisterForm() {
   };
 
   // ─── Reset del formulario ──────────────────────────────
+  /**
+   * Reinicia el formulario y errores a valores iniciales
+   * Usa useCallback para evitar recreación innecesaria
+   */
   const reset = useCallback(() => {
     setFormData({
       email: "",
@@ -98,6 +131,11 @@ export function useRegisterForm() {
   }, []);
 
   // ─── Setear error de submit (del servidor) ────────────
+  /**
+   * Establece un error de submit proveniente del servidor
+   * Usa useCallback para evitar recreación innecesaria
+   * @param error - Mensaje de error del servidor
+   */
   const setSubmitError = useCallback((error: string) => {
     setErrors((prev) => ({
       ...prev,
