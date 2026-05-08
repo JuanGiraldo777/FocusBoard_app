@@ -1,10 +1,10 @@
 import type { Request, Response, NextFunction } from "express";
 import { ZodError } from "zod";
-import { pomodoroSessionService } from "../services/pomodoro-sessions.service.ts";
-import { createSessionSchema } from "../validators/session.validator.ts";
-import { getRedis } from "../config/redis.ts";
-import { createAppError } from "../types/errors.ts";
-import { validateCreateSession } from "../middleware/session.validation.ts";
+import { pomodoroSessionService } from "../services/pomodoro-sessions.service.js";
+import { createSessionSchema } from "../validators/session.validator.js";
+import { getRedis } from "../config/redis.js";
+import { createAppError } from "../types/errors.js";
+import { validateCreateSession } from "../middleware/session.validation.js";
 
 export const pomodoroSessionController = {
   create: async (

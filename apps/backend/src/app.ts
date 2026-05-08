@@ -8,13 +8,13 @@ import { createAdapter } from "@socket.io/redis-adapter";
 import { createClient } from "redis";
 import { parse as parseCookie } from "cookie";
 import jwt from "jsonwebtoken";
-import { authRouter } from "./routes/auth.routes.ts";
-import { cronRouter } from "./routes/cron.routes.ts";
-import { pomodoroSessionRouter } from "./routes/pomodoro-sessions.routes.ts";
-import { roomRoutes } from "./routes/room.routes.ts";
-import { errorHandler } from "./middleware/errorHandler.ts";
-import { env } from "./config/env.ts";
-import { setupRoomSockets } from "./sockets/room.socket.ts";
+import { authRouter } from "./routes/auth.routes.js";
+import { cronRouter } from "./routes/cron.routes.js";
+import { pomodoroSessionRouter } from "./routes/pomodoro-sessions.routes.js";
+import { roomRoutes } from "./routes/room.routes.js";
+import { errorHandler } from "./middleware/errorHandler.js";
+import { env } from "./config/env.js";
+import { setupRoomSockets } from "./sockets/room.socket.js";
 
 const getAllowedOrigins = (): string[] => {
   const origins = [env.CORS_ORIGIN];

@@ -5,8 +5,8 @@ import {
   listRoomsQuerySchema,
   roomCodeParamsSchema,
   roomIdParamsSchema,
-} from "../validators/room.validator.ts";
-import type { RoomLocals } from "../types/room.locals.ts";
+} from "../validators/room.validator.js";
+import type { RoomLocals } from "../types/room.locals.js";
 
 const sendValidationError = (res: Response, error: ZodError): void => {
   res.status(400).json({

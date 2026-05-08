@@ -1,4 +1,4 @@
-import { db } from "../config/database.ts";
+import { db } from "../config/database.js";
 import type { PoolClient } from "pg";
 
 export interface RawRoom {

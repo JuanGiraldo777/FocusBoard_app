@@ -1,7 +1,7 @@
 import { createClient } from "redis";
-import type { IRedisClient } from "./redis.types.ts";
-import { env } from "./env.ts";
-import { createRedisMock } from "./redis-mock.ts";
+import type { IRedisClient } from "./redis.types.js";
+import { env } from "./env.js";
+import { createRedisMock } from "./redis-mock.js";
 
 // ─── Configuración de Redis (Upstash) ──────────────────────────────────
 // Este archivo inicializa la conexión a Redis en Upstash con TLS.

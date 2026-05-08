@@ -1,9 +1,9 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { randomUUID } from "crypto";
-import { userRepository } from "../repositories/user.repository.ts";
-import { env } from "../config/env.ts";
-import { createAppError } from "../types/errors.ts";
+import { userRepository } from "../repositories/user.repository.js";
+import { env } from "../config/env.js";
+import { createAppError } from "../types/errors.js";
 
 export interface RegisterData {
   email: string;

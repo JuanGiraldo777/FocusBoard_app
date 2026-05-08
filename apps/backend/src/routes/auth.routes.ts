@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { authController } from "../controllers/auth.controller.ts";
-import { validateRegister, validateLogin } from "../middleware/validation.ts";
-import { rateLimitLogin } from "../middleware/rateLimit.ts";
-import { verifyAccessToken } from "../middleware/auth.ts";
+import { authController } from "../controllers/auth.controller.js";
+import { validateRegister, validateLogin } from "../middleware/validation.js";
+import { rateLimitLogin } from "../middleware/rateLimit.js";
+import { verifyAccessToken } from "../middleware/auth.js";
 
 export const authRouter = Router();
 

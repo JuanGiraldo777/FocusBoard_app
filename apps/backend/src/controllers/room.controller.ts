@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
-import { roomService } from "../services/room.service.ts";
-import { createAppError } from "../types/errors.ts";
-import type { RoomLocals } from "../types/room.locals.ts";
+import { roomService } from "../services/room.service.js";
+import { createAppError } from "../types/errors.js";
+import type { RoomLocals } from "../types/room.locals.js";
 
 /**
  * Maneja la creación de una nueva sala

@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
-import { getRedis } from "../config/redis.ts";
-import { createAppError } from "../types/errors.ts";
+import { getRedis } from "../config/redis.js";
+import { createAppError } from "../types/errors.js";
 
 export const rateLimitLogin = async (
   req: Request,

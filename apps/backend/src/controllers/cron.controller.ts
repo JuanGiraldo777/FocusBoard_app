@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { cronService } from "../services/cron.service.ts";
+import { cronService } from "../services/cron.service.js";
 
 /**
  * Maneja el endpoint de limpieza de salas inactivas

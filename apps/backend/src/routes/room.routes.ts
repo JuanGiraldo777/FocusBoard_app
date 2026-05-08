@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { verifyAccessToken } from "../middleware/auth.ts";
+import { verifyAccessToken } from "../middleware/auth.js";
 import {
   createRoom,
   deleteRoom,
@@ -7,13 +7,13 @@ import {
   leaveRoom,
   listRooms,
   joinRoom,
-} from "../controllers/room.controller.ts";
+} from "../controllers/room.controller.js";
 import {
   validateCreateRoom,
   validateListRoomsQuery,
   validateRoomCodeParams,
   validateRoomIdParams,
-} from "../middleware/room.validation.ts";
+} from "../middleware/room.validation.js";
 
 const router = Router();
 

@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { pomodoroSessionController } from "../controllers/pomodoro-sessions.controller.ts";
-import { verifyAccessToken } from "../middleware/auth.ts";
-import { validateCreateSession } from "../middleware/session.validation.ts";
+import { pomodoroSessionController } from "../controllers/pomodoro-sessions.controller.js";
+import { verifyAccessToken } from "../middleware/auth.js";
+import { validateCreateSession } from "../middleware/session.validation.js";
 
 export const pomodoroSessionRouter = Router();
 

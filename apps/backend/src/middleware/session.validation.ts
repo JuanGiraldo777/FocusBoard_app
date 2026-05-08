@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { ZodError } from "zod";
-import { createSessionSchema } from "../validators/session.validator.ts";
+import { createSessionSchema } from "../validators/session.validator.js";
 
 
 /**

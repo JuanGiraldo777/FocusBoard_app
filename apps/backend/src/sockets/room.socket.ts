@@ -1,5 +1,5 @@
 import { Server as SocketIOServer, Socket } from "socket.io";
-import { getRedis } from "../config/redis.ts";
+import { getRedis } from "../config/redis.js";
 
 interface RoomMember {
   userId: number;

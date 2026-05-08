@@ -1,8 +1,8 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import type { JwtPayload } from "jsonwebtoken";
-import { env } from "../config/env.ts";
-import { createAppError } from "../types/errors.ts";
+import { env } from "../config/env.js";
+import { createAppError } from "../types/errors.js";
 
 // Extender Request para incluir user info
 declare module "express-serve-static-core" {

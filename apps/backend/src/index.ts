@@ -1,7 +1,7 @@
-import { env } from "./config/env.ts";
-import { connectDB } from "./config/database.ts";
-import { initRedis } from "./config/redis.ts";
-import { createApp, createSocketIO } from "./app.ts";
+import { env } from "./config/env.js";
+import { connectDB } from "./config/database.js";
+import { initRedis } from "./config/redis.js";
+import { createApp, createSocketIO } from "./app.js";
 import { createServer } from "http";
 
 const startServer = async (): Promise<void> => {

@@ -1,6 +1,6 @@
-import { db } from "../config/database.ts";
-import type { CreateSessionPayload } from "../validators/session.validator.ts";
-import { createAppError } from "../types/errors.ts";
+import { db } from "../config/database.js";
+import type { CreateSessionPayload } from "../validators/session.validator.js";
+import { createAppError } from "../types/errors.js";
 
 interface SessionStats {
   totalPomodoros: number;

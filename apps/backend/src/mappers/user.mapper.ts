@@ -1,4 +1,4 @@
-import type { UserRecord } from "../repositories/user.repository.ts";
+import type { UserRecord } from "../repositories/user.repository.js";
 import type { User } from "@focusboard/shared";
 
 export const userMapper = {

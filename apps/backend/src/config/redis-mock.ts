@@ -1,4 +1,4 @@
-import type { IRedisClient } from "./redis.types.ts";
+import type { IRedisClient } from "./redis.types.js";
 
 /**
  * Mock de Redis en memoria para desarrollo y fallback

@@ -1,11 +1,11 @@
 import type { Request, Response, NextFunction } from "express";
-import { authService } from "../services/auth.service.ts";
-import { userMapper } from "../mappers/user.mapper.ts";
+import { authService } from "../services/auth.service.js";
+import { userMapper } from "../mappers/user.mapper.js";
 import type {
   RegisterRequest,
   LoginRequest,
-} from "../middleware/validation.ts";
-import { createAppError } from "../types/errors.ts";
+} from "../middleware/validation.js";
+import { createAppError } from "../types/errors.js";
 
 export const authController = {
   /**

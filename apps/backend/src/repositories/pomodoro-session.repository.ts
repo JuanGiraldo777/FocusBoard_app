@@ -1,4 +1,4 @@
-import { db } from "../config/database.ts";
+import { db } from "../config/database.js";
 
 export interface CreateSessionData {
   userId: number;

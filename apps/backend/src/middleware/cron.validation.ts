@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
-import { cronCleanupHeadersSchema } from "../validators/cron.validator.ts";
-import { env } from "../config/env.ts";
+import { cronCleanupHeadersSchema } from "../validators/cron.validator.js";
+import { env } from "../config/env.js";
 
 /**
  * Middleware que valida que la petición venga de un cron job autorizado

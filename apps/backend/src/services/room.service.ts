@@ -1,17 +1,17 @@
-import { getRedis } from "../config/redis.ts";
+import { getRedis } from "../config/redis.js";
 import crypto from "crypto";
-import type { CreateRoomRequest } from "../validators/room.validator.ts";
+import type { CreateRoomRequest } from "../validators/room.validator.js";
 import {
   roomRepository,
   mapRawRoomToRoom,
   mapRawRoomToRoomListItem,
-} from "../repositories/room.repository.ts";
-import { createAppError } from "../types/errors.ts";
+} from "../repositories/room.repository.js";
+import { createAppError } from "../types/errors.js";
 import {
   emitMemberLeftToRoom,
   emitRoomDeleted,
   emitToUser,
-} from "../sockets/room.socket.ts";
+} from "../sockets/room.socket.js";
 
 type Room = ReturnType<typeof mapRawRoomToRoom>;
 type RoomListItem = ReturnType<typeof mapRawRoomToRoomListItem> & {

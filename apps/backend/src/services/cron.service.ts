@@ -1,5 +1,5 @@
-import { getRedis } from "../config/redis.ts";
-import { roomRepository } from "../repositories/room.repository.ts";
+import { getRedis } from "../config/redis.js";
+import { roomRepository } from "../repositories/room.repository.js";
 
 /**
  * Servicio de trabajos programados (cron jobs)

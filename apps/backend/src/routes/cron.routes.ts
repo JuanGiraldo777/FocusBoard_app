@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { cleanupInactiveRooms } from "../controllers/cron.controller.ts";
-import { validateCronSecret } from "../middleware/cron.validation.ts";
+import { cleanupInactiveRooms } from "../controllers/cron.controller.js";
+import { validateCronSecret } from "../middleware/cron.validation.js";
 
 /**
  * Rutas para trabajos programados (cron jobs)
