@@ -11,8 +11,18 @@
     "migrate:up": "node-pg-migrate up --migrations-dir src/migrations --database-url-var DATABASE_URL",
     "migrate:down": "node-pg-migrate down --migrations-dir src/migrations --database-url-var DATABASE_URL"
   },
-   "dependencies": {
+  "dependencies": {
+    "@focusboard/shared": "*",
+    "@socket.io/redis-adapter": "^8.1.0",
+    "@types/bcrypt": "^6.0.0",
+    "@types/cookie": "^0.6.0",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^24.12.2",
+    "@types/pg": "^8.20.0",
     "bcrypt": "^6.0.0",
+    "cookie": "^0.5.0",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
@@ -20,21 +30,12 @@
     "node-pg-migrate": "^8.0.4",
     "pg": "^8.20.0",
     "redis": "^5.12.1",
-    "@socket.io/redis-adapter": "^8.1.0",
-    "cookie": "^0.5.0",
     "socket.io": "^4.8.3",
-    "zod": "^4.3.6",
-    "@types/bcrypt": "^6.0.0",
-    "@types/cookie-parser": "^1.4.10",
-    "@types/express": "^5.0.6",
-    "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^24.12.2",
-    "@types/pg": "^8.20.0",
     "typescript": "^6.0.3",
-    "@focusboard/shared": "*"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.1",    
+    "@eslint/js": "^9.39.1",
     "eslint": "^9.39.4",
     "typescript-eslint": "^8.46.2"
   }
