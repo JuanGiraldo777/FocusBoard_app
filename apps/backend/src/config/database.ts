@@ -16,6 +16,9 @@ const pool = new Pool({
   max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
+  ssl: {
+    rejectUnauthorized: false
+  }
 })
 
 // Verificar conexión al arrancar y cerrar el proceso si falla
