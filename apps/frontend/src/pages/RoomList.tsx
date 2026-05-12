@@ -10,16 +10,8 @@ function isAlreadyMemberError(error: unknown): boolean {
   if (!(error instanceof Error)) {
     return false;
   }
-
-  const statusCode =
-    typeof error === "object" &&
-    error !== null &&
-    "statusCode" in error &&
-    typeof (error as { statusCode?: unknown }).statusCode === "number"
-      ? (error as { statusCode: number }).statusCode
-      : undefined;
-
-  return statusCode === 409 && /miembro/i.test(error.message);
+  // Detectar por mensaje, que viaja correctamente incluso en producción
+  return /ya eres miembro|miembro|already.*member/i.test(error.message);
 }
 
 export function RoomList() {

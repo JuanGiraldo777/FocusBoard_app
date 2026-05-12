@@ -101,7 +101,7 @@ export function useTimer(config?: TimerConfig) {
    */
   useEffect(() => {
     // Crear worker usando Vite (import.meta.url)
-    const workerScript = new URL("../utils/timer.worker.ts", import.meta.url);
+    const workerScript = new URL("../utils/timer.worker.js", import.meta.url);
     const worker = new Worker(workerScript, { type: "module" });
 
     const handleWorkerMessage = (event: MessageEvent<WorkerResponse>) => {

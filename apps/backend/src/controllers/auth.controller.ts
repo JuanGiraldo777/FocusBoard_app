@@ -7,12 +7,16 @@ import type {
 } from "../middleware/validation.js";
 import { createAppError } from "../types/errors.js";
 
-const createAuthCookieOptions = (maxAge: number): CookieOptions => ({
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-  maxAge,
-});
+const createAuthCookieOptions = (maxAge: number): CookieOptions => {
+  const isProduction = process.env.NODE_ENV === "production";
+  return {
+    httpOnly: true,
+    secure: isProduction, // Secure debe estar true en producción
+    sameSite: isProduction ? ("none" as const) : ("strict" as const), // Type-safe sameSite
+    maxAge,
+    path: "/", // Explícito: disponible en todo el sitio
+  };
+};
 
 export const authController = {
   /**

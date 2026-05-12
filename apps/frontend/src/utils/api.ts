@@ -18,7 +18,7 @@ async function apiCall<T>(
     headers: {
       "Content-Type": "application/json",
     },
-    credentials: "include" as const,
+    credentials: "include" as const, // Incluye cookies en todas las solicitudes
   };
 
   const response = await fetch(`${env.apiUrl}${endpoint}`, {
