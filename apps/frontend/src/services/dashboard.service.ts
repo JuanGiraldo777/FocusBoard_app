@@ -1,4 +1,4 @@
-import { apiCall } from "../utils/api.ts";
+import { apiCall } from "../utils/api";
 
 interface TodaySessionsResponse {
   data: {

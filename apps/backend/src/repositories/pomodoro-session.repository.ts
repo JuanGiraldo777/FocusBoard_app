@@ -127,7 +127,7 @@ export const pomodoroSessionRepository = {
        SELECT COUNT(*) as streak
        FROM (
          SELECT session_date,
-                session_date - ROW_NUMBER() OVER (ORDER BY session_date) as grp
+                session_date - (ROW_NUMBER() OVER (ORDER BY session_date))::int as grp
          FROM daily_sessions
        ) t
        WHERE grp = (SELECT grp FROM t WHERE session_date = CURRENT_DATE LIMIT 1)`,

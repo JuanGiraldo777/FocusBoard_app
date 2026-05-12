@@ -1,17 +1,17 @@
 import { Navigate, Route, Routes } from "react-router-dom";
-import { Layout } from "./components/Layout.tsx";
-import { ProtectedRoute } from "./components/ProtectedRoute.tsx";
-import { PublicRoute } from "./components/PublicRoute.tsx";
-import { AuthProvider } from "./context/AuthContext.tsx";
-import { CreateRoom } from "./pages/CreateRoom.tsx";
-import { Dashboard } from "./pages/Dashboard.tsx";
-import { History } from "./pages/History.tsx";
-import { JoinRoom } from "./pages/JoinRoom.tsx";
-import Login from "./pages/Login.tsx";
-import Register from "./pages/Register.tsx";
-import { Room }  from "./pages/Room.tsx";
-import { RoomList } from "./pages/RoomList.tsx";
-import { NotFound } from "./pages/NotFound.tsx";
+import { Layout } from "./components/Layout";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { PublicRoute } from "./components/PublicRoute";
+import { AuthProvider } from "./context/AuthContext";
+import { CreateRoom } from "./pages/CreateRoom";
+import { Dashboard } from "./pages/Dashboard";
+import { History } from "./pages/History";
+import { JoinRoom } from "./pages/JoinRoom";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import { Room } from "./pages/Room";
+import { RoomList } from "./pages/RoomList";
+import { NotFound } from "./pages/NotFound";
 
 function App() {
   return (

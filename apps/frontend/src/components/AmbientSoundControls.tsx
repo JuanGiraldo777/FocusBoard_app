@@ -2,7 +2,7 @@ import type {
   AmbientAudioStatus,
   AmbientSoundId,
   AmbientSoundOption,
-} from "../services/ambient-audio.service.ts";
+} from "../services/ambient-audio.service";
 
 interface AmbientSoundControlsProps {
   options: AmbientSoundOption[];

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
-import type { AuthContextType } from "../types/auth.ts";
+import type { AuthContextType } from "../types/auth";
 import type { User } from "@focusboard/shared";
-import { AuthContext } from "./auth.context.ts";
-import { apiCall } from "../utils/api.ts";
-import { loginUser, registerUser } from "../services/auth.service.ts";
+import { AuthContext } from "./auth.context";
+import { apiCall } from "../utils/api";
+import { loginUser, registerUser } from "../services/auth.service";
 
 /**
  * Provider que gestiona el estado de autenticación global de FocusBoard.

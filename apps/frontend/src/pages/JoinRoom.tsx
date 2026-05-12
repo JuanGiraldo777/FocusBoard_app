@@ -1,9 +1,25 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { PageHeader } from "../components/PageHeader.tsx";
-import { roomService } from "../services/room.service.ts";
-import type { RoomData } from "../services/room.service.ts";
-import { isValidRoomCode, normalizeRoomCode } from "../utils/room-code.ts";
+import { PageHeader } from "../components/PageHeader";
+import { roomService } from "../services/room.service";
+import type { RoomData } from "../services/room.service";
+import { isValidRoomCode, normalizeRoomCode } from "../utils/room-code";
+
+function isAlreadyMemberError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const statusCode =
+    typeof error === "object" &&
+    error !== null &&
+    "statusCode" in error &&
+    typeof (error as { statusCode?: unknown }).statusCode === "number"
+      ? (error as { statusCode: number }).statusCode
+      : undefined;
+
+  return statusCode === 409 && /miembro/i.test(error.message);
+}
 
 export function JoinRoom() {
   const navigate = useNavigate();
@@ -35,6 +51,11 @@ export function JoinRoom() {
       }, 1500);
     } catch (err: unknown) {
       console.error("Error joining room:", err);
+      if (isAlreadyMemberError(err)) {
+        navigate(`/room/${formattedCode}`);
+        return;
+      }
+
       const message =
         typeof err === "object" &&
         err !== null &&

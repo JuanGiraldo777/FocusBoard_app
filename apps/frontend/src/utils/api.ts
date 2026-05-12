@@ -1,4 +1,4 @@
-import env from "../config/env.ts";
+import env from "../config/env";
 
 interface FetchOptions extends RequestInit {
   skipAuth?: boolean;
@@ -82,7 +82,13 @@ async function handleErrorResponse<T>(
   response: Response,
 ): Promise<T> {
   const error = await response.json().catch(() => ({}));
-  throw new Error(error.error || `HTTP ${response.status}`);
+  const message =
+    typeof error.error === "string"
+      ? error.error
+      : `HTTP ${response.status}`;
+  const httpError = new Error(message) as Error & { statusCode?: number };
+  httpError.statusCode = response.status;
+  throw httpError;
 }
 
 export { apiCall };

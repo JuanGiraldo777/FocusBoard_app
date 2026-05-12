@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Globe, Lock } from "lucide-react";
-import { PageHeader } from "../components/PageHeader.tsx";
-import { createRoom } from "../services/room.service.ts";
+import { PageHeader } from "../components/PageHeader";
+import { createRoom } from "../services/room.service";
 
 export function CreateRoom() {
   const navigate = useNavigate();
@@ -79,128 +79,130 @@ export function CreateRoom() {
           backLabel="Salas"
         />
 
-      <div className="mx-auto max-w-lg">
-        <div className="mx-auto max-w-lg rounded-xl border border-[#EAECF0] bg-white p-8 shadow-sm dark:border-[#2D3748] dark:bg-[#1A1D27]">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label
-                htmlFor="name"
-                className="block text-sm font-medium text-[#1C2333] dark:text-white mb-2"
-              >
-                Nombre de la sala
-              </label>
-              <input
-                id="name"
-                type="text"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                className="w-full rounded-lg border border-[#EAECF0] bg-white px-4 py-2 text-sm text-[#1C2333] placeholder:text-[#9CA3AF] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 dark:border-[#2D3748] dark:bg-[#1A1D27] dark:text-white dark:placeholder:text-[#9CA3AF]"
-                placeholder="Ej: Dev Team, Study Group..."
-              />
-              {errors.name && (
-                <p className="mt-1 text-sm text-red-600">{errors.name}</p>
-              )}
-            </div>
-
-            <div>
-              <p className="block text-sm font-medium text-[#1C2333] dark:text-white mb-3">
-                Visibilidad
-              </p>
-              <div className="grid grid-cols-2 gap-4">
+        <div className="mx-auto max-w-lg">
+          <div className="mx-auto max-w-lg rounded-xl border border-[#EAECF0] bg-white p-8 shadow-sm dark:border-[#2D3748] dark:bg-[#1A1D27]">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
                 <label
-                  className={`cursor-pointer rounded-lg border p-4 ${formData.isPublic ? "border-[#F5A623]/40 bg-[#F7F8FA] dark:bg-[#2D3748]" : "border-[#EAECF0] bg-white dark:bg-[#1A1D27] dark:border-[#2D3748]"}`}
+                  htmlFor="name"
+                  className="block text-sm font-medium text-[#1C2333] dark:text-white mb-2"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-md bg-white border border-[#EAECF0] dark:bg-[#1A1D27] dark:border-[#2D3748]">
-                      <Globe className="h-5 w-5 text-[#1C2333] dark:text-white" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold text-[#1C2333] dark:text-white">
-                        Pública
-                      </div>
-                      <div className="text-xs text-[#4B5563] dark:text-[#9CA3AF]">
-                        Cualquiera puede unirse con el código
-                      </div>
-                    </div>
-                  </div>
-                  <input
-                    type="radio"
-                    className="sr-only"
-                    name="visibility"
-                    checked={formData.isPublic}
-                    onChange={() =>
-                      setFormData({ ...formData, isPublic: true })
-                    }
-                  />
+                  Nombre de la sala
                 </label>
-
-                <label
-                  className={`cursor-pointer rounded-lg border p-4 ${!formData.isPublic ? "border-[#F5A623]/40 bg-[#F7F8FA] dark:bg-[#2D3748]" : "border-[#EAECF0] bg-white dark:bg-[#1A1D27] dark:border-[#2D3748]"}`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-md bg-white border border-[#EAECF0] dark:bg-[#1A1D27] dark:border-[#2D3748]">
-                      <Lock className="h-5 w-5 text-[#1C2333] dark:text-white" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold text-[#1C2333] dark:text-white">
-                        Privada
-                      </div>
-                      <div className="text-xs text-[#4B5563] dark:text-[#9CA3AF]">
-                        Acceso solo mediante invitación
-                      </div>
-                    </div>
-                  </div>
-                  <input
-                    type="radio"
-                    className="sr-only"
-                    name="visibility"
-                    checked={!formData.isPublic}
-                    onChange={() =>
-                      setFormData({ ...formData, isPublic: false })
-                    }
-                  />
-                </label>
+                <input
+                  id="name"
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  className="w-full rounded-lg border border-[#EAECF0] bg-white px-4 py-2 text-sm text-[#1C2333] placeholder:text-[#9CA3AF] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 dark:border-[#2D3748] dark:bg-[#1A1D27] dark:text-white dark:placeholder:text-[#9CA3AF]"
+                  placeholder="Ej: Dev Team, Study Group..."
+                />
+                {errors.name && (
+                  <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                )}
               </div>
-            </div>
 
-            <div>
-              <label
-                htmlFor="maxMembers"
-                className="block text-sm font-medium text-[#1C2333] dark:text-white mb-2"
+              <div>
+                <p className="block text-sm font-medium text-[#1C2333] dark:text-white mb-3">
+                  Visibilidad
+                </p>
+                <div className="grid grid-cols-2 gap-4">
+                  <label
+                    className={`cursor-pointer rounded-lg border p-4 ${formData.isPublic ? "border-[#F5A623]/40 bg-[#F7F8FA] dark:bg-[#2D3748]" : "border-[#EAECF0] bg-white dark:bg-[#1A1D27] dark:border-[#2D3748]"}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-md bg-white border border-[#EAECF0] dark:bg-[#1A1D27] dark:border-[#2D3748]">
+                        <Globe className="h-5 w-5 text-[#1C2333] dark:text-white" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-semibold text-[#1C2333] dark:text-white">
+                          Pública
+                        </div>
+                        <div className="text-xs text-[#4B5563] dark:text-[#9CA3AF]">
+                          Cualquiera puede unirse con el código
+                        </div>
+                      </div>
+                    </div>
+                    <input
+                      type="radio"
+                      className="sr-only"
+                      name="visibility"
+                      checked={formData.isPublic}
+                      onChange={() =>
+                        setFormData({ ...formData, isPublic: true })
+                      }
+                    />
+                  </label>
+
+                  <label
+                    className={`cursor-pointer rounded-lg border p-4 ${!formData.isPublic ? "border-[#F5A623]/40 bg-[#F7F8FA] dark:bg-[#2D3748]" : "border-[#EAECF0] bg-white dark:bg-[#1A1D27] dark:border-[#2D3748]"}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-md bg-white border border-[#EAECF0] dark:bg-[#1A1D27] dark:border-[#2D3748]">
+                        <Lock className="h-5 w-5 text-[#1C2333] dark:text-white" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-semibold text-[#1C2333] dark:text-white">
+                          Privada
+                        </div>
+                        <div className="text-xs text-[#4B5563] dark:text-[#9CA3AF]">
+                          Acceso solo mediante invitación
+                        </div>
+                      </div>
+                    </div>
+                    <input
+                      type="radio"
+                      className="sr-only"
+                      name="visibility"
+                      checked={!formData.isPublic}
+                      onChange={() =>
+                        setFormData({ ...formData, isPublic: false })
+                      }
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="maxMembers"
+                  className="block text-sm font-medium text-[#1C2333] dark:text-white mb-2"
+                >
+                  Máximo de miembros
+                </label>
+                <input
+                  id="maxMembers"
+                  type="number"
+                  min={2}
+                  max={50}
+                  value={formData.maxMembers}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      maxMembers: parseInt(e.target.value) || 10,
+                    })
+                  }
+                  className="w-full rounded-lg border border-[#EAECF0] bg-white px-4 py-2 text-sm text-[#1C2333] placeholder:text-[#9CA3AF] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 dark:border-[#2D3748] dark:bg-[#1A1D27] dark:text-white"
+                />
+                {errors.maxMembers && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.maxMembers}
+                  </p>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-lg bg-[#F5A623] py-3 text-sm font-semibold text-[#1C2333] transition-all duration-150 hover:bg-opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Máximo de miembros
-              </label>
-              <input
-                id="maxMembers"
-                type="number"
-                min={2}
-                max={50}
-                value={formData.maxMembers}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    maxMembers: parseInt(e.target.value) || 10,
-                  })
-                }
-                className="w-full rounded-lg border border-[#EAECF0] bg-white px-4 py-2 text-sm text-[#1C2333] placeholder:text-[#9CA3AF] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 dark:border-[#2D3748] dark:bg-[#1A1D27] dark:text-white"
-              />
-              {errors.maxMembers && (
-                <p className="mt-1 text-sm text-red-600">{errors.maxMembers}</p>
-              )}
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-lg bg-[#F5A623] py-3 text-sm font-semibold text-[#1C2333] transition-all duration-150 hover:bg-opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {loading ? "Creando..." : "Crear sala"}
-            </button>
-          </form>
+                {loading ? "Creando..." : "Crear sala"}
+              </button>
+            </form>
+          </div>
         </div>
-      </div>
       </div>
     </div>
   );

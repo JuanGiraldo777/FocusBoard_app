@@ -7,7 +7,7 @@ import {
   saveAmbientAudioPreference,
   type AmbientAudioStatus,
   type AmbientSoundId,
-} from "../services/ambient-audio.service.ts";
+} from "../services/ambient-audio.service";
 
 interface UseAmbientAudioReturn {
   selectedSoundId: AmbientSoundId;

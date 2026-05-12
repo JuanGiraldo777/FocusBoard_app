@@ -1,10 +1,26 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Hash, Plus, Search, Users } from "lucide-react";
-import { PageHeader } from "../components/PageHeader.tsx";
-import { joinRoom, listPublicRooms } from "../services/room.service.ts";
-import type { RoomListItem } from "../services/room.service.ts";
-import { normalizeRoomCode } from "../utils/room-code.ts";
+import { PageHeader } from "../components/PageHeader";
+import { joinRoom, listPublicRooms } from "../services/room.service";
+import type { RoomListItem } from "../services/room.service";
+import { normalizeRoomCode } from "../utils/room-code";
+
+function isAlreadyMemberError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const statusCode =
+    typeof error === "object" &&
+    error !== null &&
+    "statusCode" in error &&
+    typeof (error as { statusCode?: unknown }).statusCode === "number"
+      ? (error as { statusCode: number }).statusCode
+      : undefined;
+
+  return statusCode === 409 && /miembro/i.test(error.message);
+}
 
 export function RoomList() {
   const navigate = useNavigate();
@@ -62,6 +78,11 @@ export function RoomList() {
       navigate(`/room/${normalizedCode}`);
     } catch (err) {
       console.error("Error joining room from list:", err);
+      if (isAlreadyMemberError(err)) {
+        navigate(`/room/${normalizedCode}`);
+        return;
+      }
+
       setError("No se pudo unir a la sala. Intenta de nuevo.");
     } finally {
       setJoiningCode(null);

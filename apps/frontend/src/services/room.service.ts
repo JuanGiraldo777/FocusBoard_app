@@ -1,4 +1,4 @@
-import { apiCall } from "../utils/api.ts";
+import { apiCall } from "../utils/api";
 
 export interface RoomData {
   id: number;

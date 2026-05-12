@@ -12,6 +12,7 @@ import { authRouter } from "./routes/auth.routes.js";
 import { cronRouter } from "./routes/cron.routes.js";
 import { pomodoroSessionRouter } from "./routes/pomodoro-sessions.routes.js";
 import { roomRoutes } from "./routes/room.routes.js";
+import { userRouter } from "./routes/user.routes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { env } from "./config/env.js";
 import { setupRoomSockets } from "./sockets/room.socket.js";
@@ -75,6 +76,7 @@ export const createApp = (): Express => {
 
   app.use("/api/auth", authRouter);
   app.use("/api/v1", pomodoroSessionRouter);
+  app.use("/api/v1/user", userRouter);
   app.use("/api/v1/cron", cronRouter);
   app.use("/api/v1/rooms", roomRoutes);
 

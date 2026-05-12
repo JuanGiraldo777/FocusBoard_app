@@ -113,7 +113,7 @@ const pomodoroSessionService = {
        SELECT COUNT(*) as streak
        FROM (
          SELECT day,
-                day - ROW_NUMBER() OVER (ORDER BY day) as grp
+                day - (ROW_NUMBER() OVER (ORDER BY day))::int as grp
          FROM days
          WHERE day >= CURRENT_DATE - INTERVAL '30 days'
        ) t

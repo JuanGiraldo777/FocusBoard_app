@@ -15,6 +15,16 @@ export interface UserRecord {
   created_at: string;
 }
 
+export interface UserSettingsRecord {
+  user_id: number;
+  focus_duration_min: number;
+  short_break_min: number;
+  long_break_min: number;
+  daily_goal: number;
+  sound_enabled: boolean;
+  theme: string;
+}
+
 /**
  * Repositorio de usuarios — todas las operaciones de BD relacionadas con users
  * Usa transacciones para operaciones que modifican multiples tablas
@@ -127,6 +137,27 @@ export const userRepository = {
       "SELECT id, email, full_name, avatar_url, is_active, created_at FROM users WHERE id = $1",
       [id],
     );
+    return result.rows[0] ?? null;
+  },
+
+  findSettingsByUserId: async (
+    userId: number,
+  ): Promise<UserSettingsRecord | null> => {
+    const result = await db.query(
+      `SELECT
+         user_id,
+         focus_duration_min,
+         short_break_min,
+         long_break_min,
+         daily_goal,
+         sound_enabled,
+         theme
+       FROM user_settings
+       WHERE user_id = $1
+       LIMIT 1`,
+      [userId],
+    );
+
     return result.rows[0] ?? null;
   },
 

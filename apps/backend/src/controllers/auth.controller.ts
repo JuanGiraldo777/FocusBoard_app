@@ -1,4 +1,4 @@
-import type { Request, Response, NextFunction } from "express";
+import type { CookieOptions, Request, Response, NextFunction } from "express";
 import { authService } from "../services/auth.service.js";
 import { userMapper } from "../mappers/user.mapper.js";
 import type {
@@ -6,6 +6,13 @@ import type {
   LoginRequest,
 } from "../middleware/validation.js";
 import { createAppError } from "../types/errors.js";
+
+const createAuthCookieOptions = (maxAge: number): CookieOptions => ({
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+  maxAge,
+});
 
 export const authController = {
   /**
@@ -30,19 +37,13 @@ export const authController = {
         fullName,
       });
 
-      res.cookie("accessToken", accessToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "none",
-        maxAge: 15 * 60 * 1000,
-      });
+      res.cookie("accessToken", accessToken, createAuthCookieOptions(15 * 60 * 1000));
 
-      res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "none",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
+      res.cookie(
+        "refreshToken",
+        refreshToken,
+        createAuthCookieOptions(7 * 24 * 60 * 60 * 1000),
+      );
 
       res.status(201).json({
         message: "Usuario registrado correctamente",
@@ -79,19 +80,13 @@ export const authController = {
         userAgent,
       );
 
-      res.cookie("accessToken", accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 15 * 60 * 1000,
-      });
+      res.cookie("accessToken", accessToken, createAuthCookieOptions(15 * 60 * 1000));
 
-      res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
+      res.cookie(
+        "refreshToken",
+        refreshToken,
+        createAuthCookieOptions(7 * 24 * 60 * 60 * 1000),
+      );
 
       res.status(200).json({
         message: "Sesión iniciada correctamente",
@@ -125,12 +120,11 @@ export const authController = {
       const { accessToken: newAccessToken } =
         await authService.refreshAccessToken(refreshToken);
 
-      res.cookie("accessToken", newAccessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 15 * 60 * 1000,
-      });
+      res.cookie(
+        "accessToken",
+        newAccessToken,
+        createAuthCookieOptions(15 * 60 * 1000),
+      );
 
       res.status(200).json({
         message: "Access token renovado",

@@ -10,8 +10,8 @@ import {
   Users,
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth.ts";
-import { useTheme } from "../context/ThemeContext.tsx";
+import { useAuth } from "../hooks/useAuth";
+import { useTheme } from "../context/ThemeContext";
 import logo from "../assets/logo_focusboard.png";
 
 interface NavigationItem {
@@ -121,15 +121,15 @@ export function Sidebar() {
 
             if (!item.to) {
               return (
-                  <li key={item.id} className="px-2">
-                    <button
-                      type="button"
-                      className="w-full flex items-center gap-3 px-3 py-2 rounded-r-md text-[#4B5563] dark:text-[#9CA3AF] hover:bg-[#F7F8FA] dark:hover:bg-[#2D3748] transition-colors duration-150"
-                    >
-                      <Icon className="w-5 h-5" />
-                      <span>{item.label}</span>
-                    </button>
-                  </li>
+                <li key={item.id} className="px-2">
+                  <button
+                    type="button"
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-r-md text-[#4B5563] dark:text-[#9CA3AF] hover:bg-[#F7F8FA] dark:hover:bg-[#2D3748] transition-colors duration-150"
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span>{item.label}</span>
+                  </button>
+                </li>
               );
             }
 

@@ -1,4 +1,4 @@
-import { apiCall } from "../utils/api.ts";
+import { apiCall } from "../utils/api";
 
 interface SessionData {
   id: number;
@@ -42,7 +42,9 @@ export async function getStats(): Promise<StatsData> {
 
 export async function getDailyGoal(): Promise<number> {
   try {
-    const response = await apiCall<{ data: DailyGoal }>("/api/user/settings");
+    const response = await apiCall<{ data: DailyGoal }>(
+      "/api/v1/user/settings",
+    );
     return response.data.daily_goal || 8;
   } catch (error) {
     console.error("Error fetching daily goal:", error);

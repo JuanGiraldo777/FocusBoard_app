@@ -2,9 +2,9 @@ import { useTimer } from "../hooks/useTimer";
 import type { TimerConfig, TimerControls } from "../types/timer";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { TaskDeclarationModal } from "./TaskDeclarationModal";
-import { AmbientSoundControls } from "./AmbientSoundControls.tsx";
-import { savePomodoroSession } from "../services/pomodoro-session.service.ts";
-import { useAmbientAudio } from "../hooks/useAmbientAudio.ts";
+import { AmbientSoundControls } from "./AmbientSoundControls";
+import { savePomodoroSession } from "../services/pomodoro-session.service";
+import { useAmbientAudio } from "../hooks/useAmbientAudio";
 
 const CIRCUMFERENCE = 2 * Math.PI * 90;
 const RECENT_TASKS_KEY = "focusboard:recentTasks";

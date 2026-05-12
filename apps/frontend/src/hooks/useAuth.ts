@@ -1,6 +1,6 @@
 import { useContext } from "react";
-import { AuthContext } from "../context/auth.context.ts";
-import type { AuthContextType } from "../types/auth.ts";
+import { AuthContext } from "../context/auth.context";
+import type { AuthContextType } from "../types/auth";
 
 /**
  * Hook que expone el contexto de autenticación de FocusBoard.

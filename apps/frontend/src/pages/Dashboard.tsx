@@ -1,8 +1,8 @@
-import { useAuth } from "../hooks/useAuth.ts";
-import { TimerDisplay } from "../components/TimerDisplay.tsx";
-import { PageHeader } from "../components/PageHeader.tsx";
+import { useAuth } from "../hooks/useAuth";
+import { TimerDisplay } from "../components/TimerDisplay";
+import { PageHeader } from "../components/PageHeader";
 import { useEffect, useState } from "react";
-import { getTodaySessionsCount } from "../services/dashboard.service.ts";
+import { getTodaySessionsCount } from "../services/dashboard.service";
 import { BarChart2, Users } from "lucide-react";
 
 export function Dashboard() {
